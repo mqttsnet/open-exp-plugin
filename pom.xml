@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 项目信息 -->
+    <groupId>com.mqttsnet.thinglinks</groupId>
+    <artifactId>open-exp-plugin</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+
+    <name>open-exp-plugin</name>
+    <url>http://www.mqttsnet.com</url>
+    <description>A comprehensive collection of modular and hot-swappable plugin examples, designed to demonstrate the
+        dynamic extension and customization capabilities of the ThingLinks platform using the Open EXP framework.
+    </description>
+
+    <modules>
+        <module>example-extension-define</module>
+        <module>example-plugin-demo</module>
+        <module>example-plugin-tcpserver</module>
+        <module>example-plugin-udpserver</module>
+        <module>example-plugin-tcptomqtt</module>
+        <module>example-plugin-udptomqtt</module>
+        <module>example-springboot3</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
+</project>
