@@ -131,7 +131,7 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <copy todir="../../exp-plugins">
+                                <copy todir="../exp-plugins">
                                     <!-- 将打包生成的 ZIP 文件复制到指定目录 -->
                                     <fileset dir="${project.build.directory}">
                                         <include name="${project.artifactId}-${project.version}-*.zip"/>
@@ -144,17 +144,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- 编译插件，设置源码以及编译的JDK版本 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
             </plugin>
         </plugins>
     </build>

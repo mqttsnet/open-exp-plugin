@@ -15,6 +15,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencies>
@@ -81,7 +82,6 @@
 
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -151,7 +151,7 @@
                         <configuration>
                             <tasks>
 
-                                <copy todir="../../exp-plugins">
+                                <copy todir="../exp-plugins">
                                     <!-- project.build.directory表示各个模块的target目录 -->
                                     <fileset dir="${project.build.directory}">
                                         <!-- 需要复制的jar包文件名称 -->
@@ -166,7 +166,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 </project>
