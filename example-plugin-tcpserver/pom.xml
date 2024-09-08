@@ -106,15 +106,22 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.4.1</version>
                 <configuration>
-                    <artifactSet>
-                        <includes>
-                            <!-- 确保特定的依赖项被打包到最终的 JAR 文件中 -->
-                            <include>com.mqttsnet.thinglinks:open-exp-plugin-depend</include>
-                            <include>com.mqttsnet.thinglinks:example-extension-define</include>
-                            <!--       三方依赖                     -->
-                            <include>io.netty:netty-all</include>
-                        </includes>
-                    </artifactSet>
+                    <filters>
+                        <filter>
+                            <includes>
+                                <!-- 确保特定的依赖项被打包到最终的 JAR 文件中 -->
+                                <include>com.mqttsnet.thinglinks:open-exp-plugin-depend</include>
+                                <include>com.mqttsnet.thinglinks:example-extension-define</include>
+                                <!--       三方依赖                     -->
+                                <include>io.netty:netty-all</include>
+                            </includes>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                     <!-- 生成精简后的 POM 文件，避免下游项目出现重复依赖 -->
                     <createDependencyReducedPom>true</createDependencyReducedPom>
                 </configuration>
