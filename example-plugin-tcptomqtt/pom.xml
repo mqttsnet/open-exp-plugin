@@ -82,54 +82,30 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <descriptors>
-                        <descriptor>src/main/assembly/zip.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!--根据实际情况修改-->
+            <!-- maven-shade-plugin: 用于打包项目并移除重复的依赖 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.4.1</version>
                 <configuration>
-                    <artifactSet>
-                        <includes>
-                            <!--
-                                include 元素的作用：
-                                用于明确指定需要包含在最终 JAR 文件中的具体依赖项。
-                                这里列出的依赖项（例如：com.mqttsnet.thinglinks:open-exp-plugin-depend 和 com.mqttsnet.thinglinks:example-extension-define）
-                                将会被打包进最终生成的 JAR 文件中，确保这些依赖在运行时可用。
-                            -->
-
-                            <include>com.mqttsnet.thinglinks:open-exp-plugin-depend</include>
-                            <include>com.mqttsnet.thinglinks:example-extension-define</include>
-                        </includes>
-                    </artifactSet>
-
-                    <!--
-                        createDependencyReducedPom 参数控制是否生成“依赖精简后的 POM 文件”。
-                        当设置为 true 时，插件会生成一个依赖精简后的 POM 文件，该文件会去除所有被打包进 JAR 文件的依赖。
-                        这样做的好处是：如果你的项目会被其他项目依赖，这可以避免下游项目出现重复依赖的问题。
-                        如果设置为 false，则保留原始的 POM 文件，不生成精简后的 POM 文件。
-                        适用于项目不作为依赖或不担心下游项目重复依赖的情况。
-                    -->
-
+                    <filters>
+                        <filter>
+                            <includes>
+                                <!-- 确保特定的依赖项被打包到最终的 JAR 文件中 -->
+                                <include>com.mqttsnet.thinglinks:open-exp-plugin-depend</include>
+                                <include>com.mqttsnet.thinglinks:example-extension-define</include>
+                                <!--       三方依赖                     -->
+                                <include>io.netty:netty-all</include>
+                                <include>org.eclipse.paho:org.eclipse.paho.client.mqttv3</include>
+                            </includes>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <!-- 生成精简后的 POM 文件，避免下游项目出现重复依赖 -->
                     <createDependencyReducedPom>true</createDependencyReducedPom>
                 </configuration>
                 <executions>
@@ -141,24 +117,45 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <!-- 使用 maven-antrun-plugin 重命名 jar 为 zip -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>rename-jar-to-zip</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <move file="${project.build.directory}/${project.build.finalName}.jar"
+                                      tofile="${project.build.directory}/${project.build.finalName}.zip" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- maven-antrun-plugin: 用于执行自定义的 Ant 任务 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>copy</id>
                         <phase>package</phase>
                         <configuration>
-                            <tasks>
-
+                            <target>
                                 <copy todir="../exp-plugins">
-                                    <!-- project.build.directory表示各个模块的target目录 -->
+                                    <!-- 将打包生成的 ZIP 文件复制到指定目录 -->
                                     <fileset dir="${project.build.directory}">
-                                        <!-- 需要复制的jar包文件名称 -->
-                                        <include name="${project.artifactId}-${project.version}-*.zip"/>
+                                        <include name="${project.artifactId}-${project.version}.zip"/>
                                     </fileset>
                                 </copy>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>
