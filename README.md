@@ -76,4 +76,4 @@ The source code for this project is available at: [GitHub Repository](https://gi
 
 We welcome you to join the **MQTTSNET Community**, where you can explore and promote IoT technology development together with developers from around the world. Through the community, you can access the latest technical information, rich development resources, and opportunities to communicate with other developers.
 
-Visit the [ThingLinks Official Website](https://www.thinglinks.com) for more information and to join our developer community!
+Visit the [ThingLinks Official Website](https://www.mqttsnet.com) for more information and to join our developer community!

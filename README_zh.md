@@ -77,4 +77,4 @@ ThingLinks 平台的功能。该市场提供了多种插件示例，帮助开发
 
 欢迎加入 **MQTTSNET 社区**，与全球物联网开发者一起探索和推动物联网技术的发展。通过社区，您可以获取最新的技术资讯、丰富的开发资源，以及与其他开发者交流的机会。
 
-访问 [ThingLinks 官网](https://www.thinglinks.com) 了解更多信息，并加入我们的开发者社区！
+访问 [ThingLinks 官网](https://www.mqttsnet.com) 了解更多信息，并加入我们的开发者社区！

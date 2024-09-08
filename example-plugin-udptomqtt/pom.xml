@@ -145,7 +145,7 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <copy todir="../../exp-plugins">
+                                <copy todir="../exp-plugins">
                                     <!-- 将打包生成的 ZIP 文件复制到指定目录 -->
                                     <fileset dir="${project.build.directory}">
                                         <include name="${project.artifactId}-${project.version}-*.zip"/>
