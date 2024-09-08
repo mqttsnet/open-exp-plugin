@@ -70,7 +70,6 @@
             <scope>compile</scope>
         </dependency>
 
-
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
@@ -112,6 +111,8 @@
                             <!-- 确保特定的依赖项被打包到最终的 JAR 文件中 -->
                             <include>com.mqttsnet.thinglinks:open-exp-plugin-depend</include>
                             <include>com.mqttsnet.thinglinks:example-extension-define</include>
+                            <!--       三方依赖                     -->
+                            <include>io.netty:netty-all</include>
                         </includes>
                     </artifactSet>
                     <!-- 生成精简后的 POM 文件，避免下游项目出现重复依赖 -->
