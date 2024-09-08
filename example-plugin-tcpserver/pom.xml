@@ -79,27 +79,6 @@
 
     <build>
         <plugins>
-            <!-- maven-assembly-plugin: 用于创建自定义的可分发 ZIP 文件 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <descriptors>
-                        <descriptor>src/main/assembly/zip.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!-- maven-shade-plugin: 用于打包项目并移除重复的依赖 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -134,7 +113,27 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <!-- 使用 maven-antrun-plugin 重命名 jar 为 zip -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>rename-jar-to-zip</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <move file="${project.build.directory}/${project.build.finalName}.jar"
+                                      tofile="${project.build.directory}/${project.build.finalName}.zip" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- maven-antrun-plugin: 用于执行自定义的 Ant 任务 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -149,7 +148,7 @@
                                 <copy todir="../exp-plugins">
                                     <!-- 将打包生成的 ZIP 文件复制到指定目录 -->
                                     <fileset dir="${project.build.directory}">
-                                        <include name="${project.artifactId}-${project.version}-*.zip"/>
+                                        <include name="${project.artifactId}-${project.version}.zip"/>
                                     </fileset>
                                 </copy>
                             </target>
