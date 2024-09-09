@@ -10,3 +10,6 @@ exp_object_field_config_json: '[
 	}]
 }
 ]'
+
+server:
+  port: 8080

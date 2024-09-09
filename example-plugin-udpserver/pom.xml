@@ -89,7 +89,7 @@
                     <filters>
                         <filter>
                             <includes>
-                                <!-- 确保特定的依赖项被打包到最终的 JAR 文件中 -->
+                                <!-- 确保特定的依赖项被打包到最终的 JAR 文件中 , pom 中新添加的依赖必须在此处声明-->
                                 <include>com.mqttsnet.thinglinks:open-exp-plugin-depend</include>
                                 <include>com.mqttsnet.thinglinks:example-extension-define</include>
                                 <!--       三方依赖                     -->
