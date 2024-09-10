@@ -75,6 +75,14 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.107.Final</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.70</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -88,11 +96,12 @@
                     <filters>
                         <filter>
                             <includes>
-                                <!-- 确保特定的依赖项被打包到最终的 JAR 文件中 -->
+                                <!-- 确保特定的依赖项被打包到最终的 JAR 文件中 , pom 中新添加的依赖必须在此处声明-->
                                 <include>com.mqttsnet.thinglinks:open-exp-plugin-depend</include>
                                 <include>com.mqttsnet.thinglinks:example-extension-define</include>
                                 <!--       三方依赖                     -->
                                 <include>io.netty:netty-all</include>
+                                <include>org.bouncycastle:bcprov-jdk15on</include>
                             </includes>
                             <excludes>
                                 <exclude>META-INF/*.SF</exclude>

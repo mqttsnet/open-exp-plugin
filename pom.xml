@@ -21,9 +21,9 @@
         <module>example-extension-define</module>
         <module>example-plugin-demo</module>
         <module>example-plugin-tcpserver</module>
-<!--        <module>example-plugin-udpserver</module>-->
-<!--        <module>example-plugin-tcptomqtt</module>-->
-<!--        <module>example-plugin-udptomqtt</module>-->
+        <module>example-plugin-udpserver</module>
+        <module>example-plugin-tcptomqtt</module>
+        <module>example-plugin-udptomqtt</module>
         <module>example-springboot3</module>
     </modules>
 
