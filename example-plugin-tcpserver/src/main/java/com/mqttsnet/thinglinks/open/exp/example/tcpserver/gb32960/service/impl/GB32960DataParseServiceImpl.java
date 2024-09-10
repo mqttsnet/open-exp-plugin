@@ -725,6 +725,200 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
         return String.valueOf(pushData);
     }
 
+
+    /**
+     * 处理心跳消息
+     *
+     * @param msg GB32960MessageData 消息对象
+     * @return 处理后的响应数据字符串
+     */
+    @Override
+    public String handleHeartbeat(GB32960MessageData msg) {
+        log.info("【GB32960】处理心跳消息: {}", msg);
+        //响应标识
+        msg.setMsgResponse("01");
+        //数据单元长度
+        msg.setDataCellLength("0000");
+        //校验码计算
+        StringBuilder checkCodeData = new StringBuilder()
+                .append(msg.getMsgCommand())
+                .append(msg.getMsgResponse())
+                .append(msg.getUniqueIdentifier())
+                .append(msg.getEncryption())
+                .append(msg.getDataCellLength());
+
+        msg.setCheckCode(HexUtils.getBCC(checkCodeData.toString()));
+
+        return generateResponse(msg, "01");
+    }
+
+    /**
+     * 处理平台登录消息
+     *
+     * @param msg GB32960MessageData 消息对象
+     * @return 处理后的响应数据字符串
+     */
+    @Override
+    public String handlePlatformLogin(GB32960MessageData msg) {
+        log.info("处理平台登录消息: {}", msg);
+        msg.setMsgResponse("01");
+        msg.setDataCellLength("0000");
+
+        String data = msg.getData();
+        StringBuilder timestamp = new StringBuilder().append(SubStringUtil.subStrStart(data, 12));
+
+        StringBuilder checkCodeData = new StringBuilder()
+                .append(msg.getMsgCommand())
+                .append(msg.getMsgResponse())
+                .append(msg.getUniqueIdentifier())
+                .append(msg.getEncryption())
+                .append(msg.getDataCellLength())
+                .append(timestamp);
+
+        msg.setCheckCode(HexUtils.getBCC(checkCodeData.toString()));
+        return generateResponseWithTimestamp(msg, timestamp.toString());
+    }
+
+    /**
+     * 处理平台登出消息
+     *
+     * @param msg GB32960MessageData 消息对象
+     * @return 处理后的响应数据字符串
+     */
+    @Override
+    public String handlePlatformLogout(GB32960MessageData msg) {
+        log.info("处理平台登出: {}", msg);
+        return generateResponse(msg, "06");
+    }
+
+    /**
+     * 处理车辆登录消息
+     *
+     * @param msg GB32960MessageData 消息对象
+     * @return 处理后的响应数据字符串
+     */
+    @Override
+    public String handleVehicleLogin(GB32960MessageData msg) {
+        log.info("处理车辆登录消息: {}", msg);
+        msg.setMsgResponse("01");
+        msg.setDataCellLength("0006");
+
+        String data = msg.getData();
+        StringBuilder timestamp = new StringBuilder().append(SubStringUtil.subStrStart(data, 12));
+
+        StringBuilder checkCodeData = new StringBuilder()
+                .append(msg.getMsgCommand())
+                .append(msg.getMsgResponse())
+                .append(msg.getUniqueIdentifier())
+                .append(msg.getEncryption())
+                .append(msg.getDataCellLength())
+                .append(timestamp);
+
+        msg.setCheckCode(HexUtils.getBCC(checkCodeData.toString()));
+        return generateResponseWithTimestamp(msg, timestamp.toString());
+    }
+
+    /**
+     * 处理车辆登出消息
+     *
+     * @param msg GB32960MessageData 消息对象
+     * @return 处理后的响应数据字符串
+     */
+    @Override
+    public String handleVehicleLogout(GB32960MessageData msg) {
+        log.info("处理车辆登出消息: {}", msg);
+        msg.setMsgResponse("01");
+        msg.setDataCellLength("0000");
+
+        return "";
+    }
+
+    /**
+     * 处理实时信息上报
+     *
+     * @param msg GB32960MessageData 消息对象
+     * @return 处理后的响应数据字符串
+     */
+    @Override
+    public String handleRealtimeData(GB32960MessageData msg) {
+        log.info("处理实时信息上报: {}", msg);
+
+
+        // 返回解析后的响应
+        return generateResponse(msg, "02");
+    }
+
+    /**
+     * 处理补发信息上报
+     *
+     * @param msg GB32960MessageData 消息对象
+     * @return 处理后的响应数据字符串
+     */
+    @Override
+    public String handleSupplementaryData(GB32960MessageData msg) {
+        log.info("处理补发信息上报: {}", msg);
+        return generateResponse(msg, "03");
+    }
+
+    /**
+     * 生成响应数据的通用方法
+     *
+     * @param msg         GB32960MessageData 消息对象
+     * @param msgResponse 响应命令
+     * @return 返回给客户端的响应数据
+     */
+    private String generateResponse(GB32960MessageData msg, String msgResponse) {
+        // 设置响应命令
+        msg.setMsgResponse(msgResponse);
+
+        // 假设数据单元长度固定为6字节（这里根据具体情况修改）
+        msg.setDataCellLength("0006");
+
+        // 拼接需要计算校验码的数据内容
+        StringBuilder checkCodeData = new StringBuilder()
+                .append(msg.getMsgCommand())
+                .append(msg.getMsgResponse())
+                .append(msg.getUniqueIdentifier())
+                .append(msg.getEncryption())
+                .append(msg.getDataCellLength());
+
+        // 计算校验码
+        String checkCode = HexUtils.getBCC(checkCodeData.toString());
+        msg.setCheckCode(checkCode);
+
+        // 构建完整响应数据
+        return new StringBuilder()
+                .append(msg.getMsgHead())            // 消息头
+                .append(msg.getMsgCommand())         // 命令标识
+                .append(msg.getMsgResponse())        // 应答标识
+                .append(msg.getUniqueIdentifier())   // 唯一识别码
+                .append(msg.getEncryption())         // 加密方式
+                .append(msg.getDataCellLength())     // 数据单元长度
+                .append(msg.getCheckCode())          // 校验码
+                .toString();
+    }
+
+    /**
+     * 带时间戳的响应生成
+     *
+     * @param msg       消息对象
+     * @param timestamp 时间戳数据
+     * @return 拼接响应数据
+     */
+    private String generateResponseWithTimestamp(GB32960MessageData msg, String timestamp) {
+        return new StringBuilder()
+                .append(msg.getMsgHead())
+                .append(msg.getMsgCommand())
+                .append(msg.getMsgResponse())
+                .append(msg.getUniqueIdentifier())
+                .append(msg.getEncryption())
+                .append(msg.getDataCellLength())
+                .append(timestamp)
+                .append(msg.getCheckCode())
+                .toString();
+    }
+
+
     public static void main(String[] args) throws UnsupportedEncodingException {
         String a = "4c464341483935570344d33303130303936";
         String newstr = new String(a.getBytes(Charset.defaultCharset()), "US-ASCII");

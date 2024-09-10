@@ -40,7 +40,6 @@
         </dependency>
 
 
-
         <!-- https://mvnrepository.com/artifact/cn.hutool/hutool-all -->
         <dependency>
             <groupId>cn.hutool</groupId>
@@ -86,7 +85,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.6.0</version>
                 <configuration>
                     <filters>
                         <filter>
@@ -98,7 +97,12 @@
                                 <include>io.netty:netty-all</include>
                                 <include>org.eclipse.paho:org.eclipse.paho.client.mqttv3</include>
                             </includes>
+                        </filter>
+                        <filter>
+                            <!-- 所有依赖参与过滤 -->
+                            <artifact>*:*</artifact>
                             <excludes>
+                                <!-- 排除所有依赖下的这些文件 -->
                                 <exclude>META-INF/*.SF</exclude>
                                 <exclude>META-INF/*.DSA</exclude>
                                 <exclude>META-INF/*.RSA</exclude>
@@ -132,7 +136,7 @@
                         <configuration>
                             <target>
                                 <move file="${project.build.directory}/${project.build.finalName}.jar"
-                                      tofile="${project.build.directory}/${project.build.finalName}.zip" />
+                                      tofile="${project.build.directory}/${project.build.finalName}.zip"/>
                             </target>
                         </configuration>
                     </execution>
