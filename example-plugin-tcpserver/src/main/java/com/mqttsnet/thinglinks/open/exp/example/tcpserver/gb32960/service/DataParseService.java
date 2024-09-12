@@ -14,7 +14,7 @@ import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.entity.dao.GB3
  * @Version: 1.0
  */
 
-public interface GB32960DataParseService {
+public interface DataParseService {
 
     /**
      * 实时数据解析并返回数据

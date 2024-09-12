@@ -3,7 +3,7 @@ package com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.impl;
 
 import cn.hutool.json.JSONUtil;
 import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.entity.dao.*;
-import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.GB32960DataParseService;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.DataParseService;
 import com.mqttsnet.thinglinks.open.exp.example.tcpserver.utils.HexUtils;
 import com.mqttsnet.thinglinks.open.exp.example.tcpserver.utils.SubStringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class GB32960DataParseServiceImpl implements GB32960DataParseService {
+public class DataParseServiceImpl implements DataParseService {
 
    /* @Autowired
     private RedisService redisService;*/

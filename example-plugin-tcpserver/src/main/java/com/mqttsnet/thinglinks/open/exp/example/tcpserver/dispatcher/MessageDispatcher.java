@@ -2,11 +2,12 @@ package com.mqttsnet.thinglinks.open.exp.example.tcpserver.dispatcher;
 
 import cn.hutool.core.util.StrUtil;
 import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.entity.dao.GB32960MessageData;
-import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.GB32960DataParseService;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.DataParseService;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.impl.DataParseServiceImpl;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.utils.SpringUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,12 +34,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960MessageData> {
 
-    @Autowired
-    private GB32960DataParseService dataParseService;
-
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, GB32960MessageData msg) throws Exception {
-//        GB32960DataParseService dataParseService = SpringUtils.getBean(GB32960DataParseService.class);
+        DataParseService dataParseService = SpringUtils.getBean(DataParseServiceImpl.class);
         String msgCommand = msg.getMsgCommand();
         String response = "";
 

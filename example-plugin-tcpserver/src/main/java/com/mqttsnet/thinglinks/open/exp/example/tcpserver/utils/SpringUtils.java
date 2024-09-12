@@ -1,6 +1,8 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcpserver.utils;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.Map;
@@ -11,6 +13,7 @@ import java.util.Map;
  * @author mqttsnet
  * @date 2017-12-25 16:27
  */
+@Component
 public final class SpringUtils {
     private static ApplicationContext applicationContext;
     private static ApplicationContext parentApplicationContext;
@@ -31,6 +34,7 @@ public final class SpringUtils {
         return applicationContext;
     }
 
+    @Autowired
     public static void setApplicationContext(ApplicationContext ctx) {
         Assert.notNull(ctx, "SpringUtil injection ApplicationContext is null");
         applicationContext = ctx;
