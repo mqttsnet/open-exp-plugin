@@ -30,7 +30,7 @@
         <dependency>
             <groupId>com.mqttsnet.thinglinks</groupId>
             <artifactId>exp-plugin-manager-springboot-starter</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
 
         <dependency>

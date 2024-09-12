@@ -38,6 +38,7 @@ public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960Messag
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, GB32960MessageData msg) throws Exception {
+//        GB32960DataParseService dataParseService = SpringUtils.getBean(GB32960DataParseService.class);
         String msgCommand = msg.getMsgCommand();
         String response = "";
 
@@ -63,6 +64,9 @@ public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960Messag
                 break;
             case "07": // 处理心跳
                 response = dataParseService.handleHeartbeat(msg);
+                break;
+            case "08": // 同步校时
+                response = dataParseService.handleTimeSynchronization(msg);
                 break;
             default:
                 log.warn("未处理的 GB32960 消息类型: {}", msgCommand);

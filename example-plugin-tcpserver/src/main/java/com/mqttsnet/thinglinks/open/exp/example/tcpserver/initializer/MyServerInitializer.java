@@ -52,6 +52,12 @@ public class MyServerInitializer extends ChannelInitializer<SocketChannel> {
         // 添加空闲检测处理器，检测是否有读写超时
         pipeline.addLast(new IdleStateHandler(60, 0, 0));
 
+        // 这里也可以使用 LengthFieldBasedFrameDecoder 来解决粘包和拆包问题（GB32960Decoder 中也处理了这里就可以不启用）
+        /*pipeline.addLast(
+                new LengthFieldBasedFrameDecoder(64 * 1024, 22, 2, 1, 2)
+        );*/
+
+
         // 添加 GB32960 协议解码器，解决粘包和拆包问题
         pipeline.addLast(new GB32960Decoder());
 

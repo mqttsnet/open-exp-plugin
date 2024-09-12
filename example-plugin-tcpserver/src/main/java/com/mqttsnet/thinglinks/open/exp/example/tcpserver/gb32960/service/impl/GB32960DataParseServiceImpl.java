@@ -43,6 +43,7 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
      * @param readDatas
      */
     @Override
+    @Deprecated
     public String realTimeDataParseAndPushData(String readDatas) throws Exception {
         //心跳
         if ("07".equals(SubStringUtil.subStr(readDatas, 4, 6))) {
@@ -156,9 +157,9 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
         //实时数据单元处理(不加密)
         if ("02".equals(gb32960MessageData.getMsgCommand()) || "03".equals(gb32960MessageData.getMsgCommand()) && "01".equals(gb32960MessageData.getEncryption())) {
             log.info("32960实时数据处理----->");
-            GB32960BaseDTO dflzmBaseDTO = new GB32960BaseDTO();
-            dflzmBaseDTO.setCommand("TERMINAL_VEHICLE_UPLOAD_REALTIME");
-            dflzmBaseDTO.setVin(HexUtils.convertHexToString(gb32960MessageData.getUniqueIdentifier()));
+            GB32960BaseDTO gb32960BaseDTO = new GB32960BaseDTO();
+            gb32960BaseDTO.setCommand("TERMINAL_VEHICLE_UPLOAD_REALTIME");
+            gb32960BaseDTO.setVin(HexUtils.convertHexToString(gb32960MessageData.getUniqueIdentifier()));
             String data = gb32960MessageData.getData();
             //采集时间处理
             log.info("采集时间-年：" + HexUtils.hexStringToDecimal(SubStringUtil.subStrStart(data, 2)));
@@ -174,7 +175,7 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Date date = simpleDateFormat.parse(acquisitionTime);
             long ts = date.getTime();
-            dflzmBaseDTO.setDataTime(ts);
+            gb32960BaseDTO.setDataTime(ts);
             if ("01".equals(SubStringUtil.subStr(data, 12, 14))) {
                 //整车数据处理
                 GB32960VehicleStatus vehicleStatus = new GB32960VehicleStatus();
@@ -300,7 +301,7 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
                 //预留位
                 Integer yuliu = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 50, 54));
 
-                dflzmBaseDTO.setVehicleStatus(vehicleStatus);
+                gb32960BaseDTO.setVehicleStatus(vehicleStatus);
                 gb32960MessageData.setData(SubStringUtil.subStr(data, 54, gb32960MessageData.getData().length()));
             }
             if ("02".equals(SubStringUtil.subStrStart(gb32960MessageData.getData(), 2))) {
@@ -384,7 +385,7 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
                 List<GB32960DriveMotors> list = new ArrayList<>();
                 list.add(driveMotors);
                 driveMotorStatus.setDriveMotors(list);
-                dflzmBaseDTO.setDriveMotorStatus(driveMotorStatus);
+                gb32960BaseDTO.setDriveMotorStatus(driveMotorStatus);
                 gb32960MessageData.setData(SubStringUtil.subStr(gb32960MessageData.getData(), driveMotorsLength.length() + 4, gb32960MessageData.getData().length()));
             }
             if ("05".equals(SubStringUtil.subStrStart(gb32960MessageData.getData(), 2))) {
@@ -432,7 +433,7 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
                         locationStatus.setLatitude(result);
                         break;
                 }
-                dflzmBaseDTO.setLocationStatus(locationStatus);
+                gb32960BaseDTO.setLocationStatus(locationStatus);
                 gb32960MessageData.setData(SubStringUtil.subStr(gb32960MessageData.getData(), 20, gb32960MessageData.getData().length()));
             }
             if ("06".equals(SubStringUtil.subStrStart(gb32960MessageData.getData(), 2))) {
@@ -516,7 +517,7 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
                         extremeStatus.setMinTemperature(extremeStatusMinTemperature - 40);
                         break;
                 }
-                dflzmBaseDTO.setExtremeStatus(extremeStatus);
+                gb32960BaseDTO.setExtremeStatus(extremeStatus);
                 gb32960MessageData.setData(SubStringUtil.subStr(gb32960MessageData.getData(), 30, gb32960MessageData.getData().length()));
             }
             if ("07".equals(SubStringUtil.subStrStart(gb32960MessageData.getData(), 2))) {
@@ -626,7 +627,7 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
                         }
                         break;
                 }
-                dflzmBaseDTO.setAlertStatus(alertStatus);
+                gb32960BaseDTO.setAlertStatus(alertStatus);
                 gb32960MessageData.setData(SubStringUtil.subStr(gb32960MessageData.getData(), i += 4 * alertStatusEngineAlertCount, gb32960MessageData.getData().length()));
             }
             if ("08".equals(SubStringUtil.subStrStart(gb32960MessageData.getData(), 2))) {
@@ -673,7 +674,7 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
                 }
                 //可充电储能子系统电压信息列表
                 energyStorageVoltageStatus.setEnergyStorageVoltages(energyStorageVoltagesList);
-                dflzmBaseDTO.setEnergyStorageVoltageStatus(energyStorageVoltageStatus);
+                gb32960BaseDTO.setEnergyStorageVoltageStatus(energyStorageVoltageStatus);
                 gb32960MessageData.setData(SubStringUtil.subStr(gb32960MessageData.getData(), i, gb32960MessageData.getData().length()));
             }
             if ("09".equals(SubStringUtil.subStrStart(gb32960MessageData.getData(), 2))) {
@@ -704,11 +705,11 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
                 }
                 //可充电储能子系统温度信息列表,按可充电储能子系统代号依次排列，每个可充电储能子系统温度分布数据格
                 energyStorageTemperatureStatus.setEnergyStorageTemperatures(energyStorageTemperaturesList);
-                dflzmBaseDTO.setEnergyStorageTemperatureStatus(energyStorageTemperatureStatus);
+                gb32960BaseDTO.setEnergyStorageTemperatureStatus(energyStorageTemperatureStatus);
                 gb32960MessageData.setData(SubStringUtil.subStr(gb32960MessageData.getData(), i, gb32960MessageData.getData().length()));
             }
             //TODO 数据解析完成推送至mq
-            log.info("数据解析完成推送至mq{}", JSONUtil.toJsonStr(dflzmBaseDTO));
+            log.info("数据解析完成推送至mq{}", JSONUtil.toJsonStr(gb32960BaseDTO));
         }
         //响应标识
         gb32960MessageData.setMsgResponse("01");
@@ -739,17 +740,17 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
         msg.setMsgResponse("01");
         //数据单元长度
         msg.setDataCellLength("0000");
-        //校验码计算
-        StringBuilder checkCodeData = new StringBuilder()
-                .append(msg.getMsgCommand())
-                .append(msg.getMsgResponse())
-                .append(msg.getUniqueIdentifier())
-                .append(msg.getEncryption())
-                .append(msg.getDataCellLength());
 
-        msg.setCheckCode(HexUtils.getBCC(checkCodeData.toString()));
+        return generateResponse(msg);
+    }
 
-        return generateResponse(msg, "01");
+    @Override
+    public String handleTimeSynchronization(GB32960MessageData msg) {
+        log.info("【GB32960】处理终端校时数据: {}", msg);
+        msg.setMsgResponse("01");
+        msg.setDataCellLength("0006");
+
+        return generateResponseWithTimestamp(msg);
     }
 
     /**
@@ -760,23 +761,11 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
      */
     @Override
     public String handlePlatformLogin(GB32960MessageData msg) {
-        log.info("处理平台登录消息: {}", msg);
+        log.info("【GB32960】处理平台登录消息: {}", msg);
         msg.setMsgResponse("01");
-        msg.setDataCellLength("0000");
+        msg.setDataCellLength("0006");
 
-        String data = msg.getData();
-        StringBuilder timestamp = new StringBuilder().append(SubStringUtil.subStrStart(data, 12));
-
-        StringBuilder checkCodeData = new StringBuilder()
-                .append(msg.getMsgCommand())
-                .append(msg.getMsgResponse())
-                .append(msg.getUniqueIdentifier())
-                .append(msg.getEncryption())
-                .append(msg.getDataCellLength())
-                .append(timestamp);
-
-        msg.setCheckCode(HexUtils.getBCC(checkCodeData.toString()));
-        return generateResponseWithTimestamp(msg, timestamp.toString());
+        return generateResponseWithTimestamp(msg);
     }
 
     /**
@@ -787,8 +776,13 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
      */
     @Override
     public String handlePlatformLogout(GB32960MessageData msg) {
-        log.info("处理平台登出: {}", msg);
-        return generateResponse(msg, "06");
+        log.info("【GB32960】处理平台登出: {}", msg);
+        // 设置响应命令
+        msg.setMsgResponse("01");
+        // 假设数据单元长度固定为6字节（这里根据具体情况修改）
+        msg.setDataCellLength("0006");
+
+        return generateResponseWithTimestamp(msg);
     }
 
     /**
@@ -799,23 +793,10 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
      */
     @Override
     public String handleVehicleLogin(GB32960MessageData msg) {
-        log.info("处理车辆登录消息: {}", msg);
+        log.info("【GB32960】处理车辆登录消息: {}", msg);
         msg.setMsgResponse("01");
         msg.setDataCellLength("0006");
-
-        String data = msg.getData();
-        StringBuilder timestamp = new StringBuilder().append(SubStringUtil.subStrStart(data, 12));
-
-        StringBuilder checkCodeData = new StringBuilder()
-                .append(msg.getMsgCommand())
-                .append(msg.getMsgResponse())
-                .append(msg.getUniqueIdentifier())
-                .append(msg.getEncryption())
-                .append(msg.getDataCellLength())
-                .append(timestamp);
-
-        msg.setCheckCode(HexUtils.getBCC(checkCodeData.toString()));
-        return generateResponseWithTimestamp(msg, timestamp.toString());
+        return generateResponseWithTimestamp(msg);
     }
 
     /**
@@ -826,11 +807,13 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
      */
     @Override
     public String handleVehicleLogout(GB32960MessageData msg) {
-        log.info("处理车辆登出消息: {}", msg);
+        log.info("【GB32960】处理车辆登出消息: {}", msg);
+        // 设置响应命令
         msg.setMsgResponse("01");
-        msg.setDataCellLength("0000");
+        // 假设数据单元长度固定为6字节（这里根据具体情况修改）
+        msg.setDataCellLength("0006");
 
-        return "";
+        return generateResponseWithTimestamp(msg);
     }
 
     /**
@@ -841,11 +824,15 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
      */
     @Override
     public String handleRealtimeData(GB32960MessageData msg) {
-        log.info("处理实时信息上报: {}", msg);
+        log.info("【GB32960】处理实时信息上报: {}", msg);
+        // 设置响应命令
+        msg.setMsgResponse("01");
+        //数据单元长度
+        msg.setDataCellLength("0006");
 
-
+        parseRealTimeOrSupplementaryData(msg);
         // 返回解析后的响应
-        return generateResponse(msg, "02");
+        return generateResponseWithTimestamp(msg);
     }
 
     /**
@@ -856,24 +843,593 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
      */
     @Override
     public String handleSupplementaryData(GB32960MessageData msg) {
-        log.info("处理补发信息上报: {}", msg);
-        return generateResponse(msg, "03");
+        log.info("【GB32960】处理补发信息上报: {}", msg);
+        // 设置响应命令
+        msg.setMsgResponse("01");
+        //数据单元长度
+        msg.setDataCellLength("0006");
+
+        parseRealTimeOrSupplementaryData(msg);
+
+        return generateResponseWithTimestamp(msg);
     }
+
+
+    // 解析实时数据或补发数据
+    private void parseRealTimeOrSupplementaryData(GB32960MessageData msg) {
+        String data = msg.getData();
+        // 实时数据处理逻辑
+        if ("02".equals(msg.getMsgCommand())) {
+            // 处理实时数据
+            handleRealtimeDataParsing(data, msg);
+        }
+
+        // 补发数据处理逻辑
+        if ("03".equals(msg.getMsgCommand())) {
+            // 处理补发数据
+            handleSupplementaryDataParsing(data, msg);
+        }
+    }
+
+
+    private void handleRealtimeDataParsing(String data, GB32960MessageData msg) {
+        log.info("处理实时数据: {}", data);
+
+        GB32960BaseDTO gb32960BaseDTO = new GB32960BaseDTO();
+        gb32960BaseDTO.setCommand("TERMINAL_VEHICLE_UPLOAD_REALTIME");
+        gb32960BaseDTO.setVin(HexUtils.convertHexToString(msg.getUniqueIdentifier()));
+
+        // 解析采集时间
+        String year = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String acquisitionTime = year + " " +
+                HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 6, 8)) + ":" +
+                HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 8, 10)) + ":" +
+                HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 10, 12));
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        try {
+            Date date = simpleDateFormat.parse(acquisitionTime);
+            long ts = date.getTime();
+            gb32960BaseDTO.setDataTime(ts);
+        } catch (Exception e) {
+            log.error("时间解析错误: {}", acquisitionTime, e);
+        }
+
+        // 整车数据处理
+        if ("01".equals(SubStringUtil.subStr(data, 12, 14))) {
+            GB32960VehicleStatus vehicleStatus = new GB32960VehicleStatus();
+            vehicleStatus.setEngineStatus(parseEngineStatus(SubStringUtil.subStr(data, 14, 16)));
+            vehicleStatus.setChargingStatus(parseChargingStatus(SubStringUtil.subStr(data, 16, 18)));
+            vehicleStatus.setRunningModel(parseRunningModel(SubStringUtil.subStr(data, 18, 20)));
+            vehicleStatus.setSpeed(parseSpeed(SubStringUtil.subStr(data, 20, 24)));
+            vehicleStatus.setMileage(parseMileage(SubStringUtil.subStr(data, 24, 32)));
+            vehicleStatus.setVoltage(parseVoltage(SubStringUtil.subStr(data, 32, 36)));
+            vehicleStatus.setCurrent(parseCurrent(SubStringUtil.subStr(data, 36, 40)));
+            vehicleStatus.setSoc(parseSoc(SubStringUtil.subStr(data, 40, 42)));
+            vehicleStatus.setDcStatus(parseDcStatus(SubStringUtil.subStr(data, 42, 44)));
+            vehicleStatus.setTransmissionStatus(parseTransmissionStatus(SubStringUtil.subStr(data, 44, 46)));
+            vehicleStatus.setInsulationResistance(parseInsulationResistance(SubStringUtil.subStr(data, 46, 50)));
+            gb32960BaseDTO.setVehicleStatus(vehicleStatus);
+
+            // 解析驱动电机数据
+            if ("02".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+                gb32960BaseDTO.setDriveMotorStatus(parseDriveMotorStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
+            }
+
+            // 解析车辆位置数据
+            if ("05".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+                gb32960BaseDTO.setLocationStatus(parseLocationStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
+            }
+
+            // 解析极致数据
+            if ("06".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+                gb32960BaseDTO.setExtremeStatus(parseExtremeStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
+            }
+
+            // 解析报警数据
+            if ("07".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+                gb32960BaseDTO.setAlertStatus(parseAlertStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
+            }
+
+            // 解析可充电储能装置电压数据
+            if ("08".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+                gb32960BaseDTO.setEnergyStorageVoltageStatus(parseEnergyStorageVoltageStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
+            }
+
+            // 解析可充电储能装置温度数据
+            if ("09".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+                gb32960BaseDTO.setEnergyStorageTemperatureStatus(parseEnergyStorageTemperatureStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
+            }
+        }
+
+        // TODO: 将 gb32960BaseDTO 推送到 Kafka 或其他 API
+        processFinalData(gb32960BaseDTO);
+    }
+
+    private void handleSupplementaryDataParsing(String data, GB32960MessageData msg) {
+        log.info("处理补发数据: {}", data);
+
+        GB32960BaseDTO gb32960BaseDTO = new GB32960BaseDTO();
+        gb32960BaseDTO.setCommand("SUPPLEMENTARY_DATA");
+        gb32960BaseDTO.setVin(HexUtils.convertHexToString(msg.getUniqueIdentifier()));
+
+        // 解析补发数据的具体逻辑
+        // 例如：解析补发数据中的时间、状态、参数等
+        // 请根据补发数据的具体格式和需求添加相应的解析逻辑
+
+        // TODO: 解析补发数据逻辑
+        gb32960BaseDTO.setDataTime(System.currentTimeMillis()); // 示例设置时间
+
+        // TODO: 将 gb32960BaseDTO 推送到 Kafka 或其他 API
+        processFinalData(gb32960BaseDTO);
+    }
+
+    private String parseEngineStatus(String status) {
+        switch (status) {
+            case "01":
+                return "STARTED";
+            case "02":
+                return "STOPPED";
+            case "03":
+                return "OTHER";
+            case "FE":
+                return "ERROR";
+            case "FF":
+                return "INVALID";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
+    private String parseChargingStatus(String status) {
+        switch (status) {
+            case "01":
+                return "CHARGING_STOPPED";
+            case "02":
+                return "CHARGING_DRIVING";
+            case "03":
+                return "NO_CHARGING";
+            case "04":
+                return "NO_CHARGING";
+            case "FE":
+                return "ERROR";
+            case "FF":
+                return "INVALID";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
+    private String parseRunningModel(String model) {
+        switch (model) {
+            case "01":
+                return "EV";
+            case "02":
+                return "PHEV";
+            case "03":
+                return "FV";
+            case "FE":
+                return "ERROR";
+            case "FF":
+                return "INVALID";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
+    private Double parseSpeed(String speedHex) {
+        Integer speed = HexUtils.hexStringToDecimal(speedHex);
+        return new BigDecimal(speed).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+    }
+
+    private Double parseMileage(String mileageHex) {
+        Integer mileage = HexUtils.hexStringToDecimal(mileageHex);
+        return new BigDecimal(mileage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+    }
+
+    private Double parseVoltage(String voltageHex) {
+        Integer voltage = HexUtils.hexStringToDecimal(voltageHex);
+        return new BigDecimal(voltage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+    }
+
+    private Double parseCurrent(String currentHex) {
+        Integer current = HexUtils.hexStringToDecimal(currentHex);
+        return new BigDecimal(current).subtract(new BigDecimal(1000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+    }
+
+    private Integer parseSoc(String socHex) {
+        return HexUtils.hexStringToDecimal(socHex);
+    }
+
+    private String parseDcStatus(String dcStatus) {
+        switch (dcStatus) {
+            case "01":
+                return "NORMAL";
+            case "02":
+                return "OFF";
+            case "FE":
+                return "ERROR";
+            case "FF":
+                return "INVALID";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
+    private GB32960TransmissionStatus parseTransmissionStatus(String transmissionStatusHex) {
+        GB32960TransmissionStatus status = new GB32960TransmissionStatus();
+        Integer gear = HexUtils.hexStringToDecimal(transmissionStatusHex);
+        status.setGear(gear);
+        return status;
+    }
+
+    private Integer parseInsulationResistance(String resistanceHex) {
+        return HexUtils.hexStringToDecimal(resistanceHex);
+    }
+
+    private GB32960DriveMotorStatus parseDriveMotorStatus(String driveMotorData) {
+        log.info("解析驱动电机数据: {}", driveMotorData);
+
+        GB32960DriveMotorStatus driveMotorStatus = new GB32960DriveMotorStatus();
+
+        // 驱动机个数
+        Integer driveMotorCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorData, 0, 2));
+        driveMotorStatus.setDriveMotorCount(driveMotorCount);
+
+        List<GB32960DriveMotors> driveMotorsList = new ArrayList<>();
+
+        int offset = 2; // 初始化偏移量
+        for (int i = 0; i < driveMotorCount; i++) {
+            GB32960DriveMotors driveMotors = new GB32960DriveMotors();
+
+            // 每个驱动电机总成信息长度
+            String driveMotorInfo = SubStringUtil.subStr(driveMotorData, offset, 28);
+            offset += 28;
+
+            // 驱动电机序号
+            Integer driveMotorSn = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 0, 2));
+            driveMotors.setSn(driveMotorSn);
+
+            // 驱动电机功率状态
+            String driveMotorPower = SubStringUtil.subStr(driveMotorInfo, 2, 4);
+            switch (driveMotorPower) {
+                case "01":
+                    driveMotors.setDriveMotorPower("CONSUMING_POWER");
+                    break;
+                case "02":
+                    driveMotors.setDriveMotorPower("GENERATING_POWER");
+                    break;
+                case "03":
+                    driveMotors.setDriveMotorPower("CLOSED");
+                    break;
+                case "04":
+                    driveMotors.setDriveMotorPower("PREPARING");
+                    break;
+                case "FE":
+                    driveMotors.setDriveMotorPower("CLOSED");
+                    break;
+                case "FF":
+                    driveMotors.setDriveMotorPower("INVALID");
+                    break;
+                default:
+                    driveMotors.setDriveMotorPower("UNKNOWN");
+                    break;
+            }
+
+            // 驱动电机控制器温度
+            Integer controllerTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 4, 6));
+            driveMotors.setControllerTemperature(controllerTemperature - 40);
+
+            // 驱动电机转速
+            Integer driveMotorSpeed = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 6, 10));
+            driveMotors.setDriveMotorSpeed(driveMotorSpeed - 20000);
+
+            // 驱动电机转矩
+            Integer driveMotorTorque = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 10, 14));
+            Double motorTorque = new BigDecimal(driveMotorTorque).subtract(new BigDecimal(20000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+            driveMotors.setDriveMotorTorque(motorTorque);
+
+            // 驱动电机温度
+            Integer driveMotorTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 14, 16));
+            driveMotors.setDriveMotorTemperature(driveMotorTemperature - 40);
+
+            // 电机控制器输入电压
+            Integer controllerInputVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 16, 20));
+            Double inputVoltage = new BigDecimal(controllerInputVoltage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+            driveMotors.setControllerInputVoltage(inputVoltage);
+
+            // 电机控制器直流母线电流
+            Integer dcBusCurrent = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 20, 24));
+            Double busCurrent = new BigDecimal(dcBusCurrent).subtract(new BigDecimal(1000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+            driveMotors.setDcBusCurrentOfController(busCurrent);
+
+            driveMotorsList.add(driveMotors);
+        }
+
+        driveMotorStatus.setDriveMotors(driveMotorsList);
+        return driveMotorStatus;
+    }
+
+    private GB32960LocationStatus parseLocationStatus(String locationData) {
+        log.info("解析位置数据: {}", locationData);
+
+        GB32960LocationStatus locationStatus = new GB32960LocationStatus();
+
+        // 定位状态
+        GB32960LocateStatus locateStatus = new GB32960LocateStatus();
+        locateStatus.setValidation("VALID");
+
+        Integer latitudeType = HexUtils.hexStringToDecimal(SubStringUtil.subStr(locationData, 0, 1));
+        locateStatus.setLatitudeType(latitudeType == 0 ? "NORTH" : "SOUTH");
+
+        Integer longitudeType = HexUtils.hexStringToDecimal(SubStringUtil.subStr(locationData, 1, 2));
+        locateStatus.setLongitudeType(longitudeType == 0 ? "EAST" : "WEST");
+
+        locationStatus.setLocateStatus(locateStatus);
+
+        // 精度
+        Integer longitude = HexUtils.hexStringToDecimal(SubStringUtil.subStr(locationData, 2, 10));
+        locationStatus.setLongitude(new BigDecimal(longitude).movePointLeft(6).doubleValue());
+
+        Integer latitude = HexUtils.hexStringToDecimal(SubStringUtil.subStr(locationData, 10, 18));
+        locationStatus.setLatitude(new BigDecimal(latitude).movePointLeft(6).doubleValue());
+
+        return locationStatus;
+    }
+
+    private GB32960ExtremeStatus parseExtremeStatus(String extremeData) {
+        log.info("解析极致数据: {}", extremeData);
+
+        GB32960ExtremeStatus extremeStatus = new GB32960ExtremeStatus();
+
+        // 最高电压电池子系统号
+        Integer maxVoltageSubSystem = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 0, 2));
+        extremeStatus.setSubSystemIndexOfMaxVoltage(maxVoltageSubSystem);
+
+        // 最高电压电池单体代号
+        Integer maxVoltageCellIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 2, 4));
+        extremeStatus.setCellIndexOfMaxVoltage(maxVoltageCellIndex);
+
+        // 电池单体电压最高值
+        Integer maxVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 4, 8));
+        extremeStatus.setCellMaxVoltage(new BigDecimal(maxVoltage).divide(new BigDecimal("1000")).setScale(3, BigDecimal.ROUND_UP).doubleValue());
+
+        // 最低电压电池子系统号
+        Integer minVoltageSubSystem = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 8, 10));
+        extremeStatus.setSubSystemIndexOfMinVoltage(minVoltageSubSystem);
+
+        // 最低电压电池单体代号
+        Integer minVoltageCellIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 10, 12));
+        extremeStatus.setCellIndexOfMinVoltage(minVoltageCellIndex);
+
+        // 电池单体电压最低值
+        Integer minVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 12, 16));
+        extremeStatus.setCellMinVoltage(new BigDecimal(minVoltage).divide(new BigDecimal("1000")).setScale(3, BigDecimal.ROUND_UP).doubleValue());
+
+        // 最高温度子系统号
+        Integer maxTempSubSystem = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 16, 18));
+        extremeStatus.setSubSystemIndexOfMaxTemperature(maxTempSubSystem);
+
+        // 最高温度探针序号
+        Integer maxTempProbeIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 18, 20));
+        extremeStatus.setProbeIndexOfMaxTemperature(maxTempProbeIndex);
+
+        // 最高温度值
+        Integer maxTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 20, 22));
+        extremeStatus.setMaxTemperature(maxTemperature - 40);
+
+        // 最低温度子系统号
+        Integer minTempSubSystem = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 22, 24));
+        extremeStatus.setSubSystemIndexOfMinTemperature(minTempSubSystem);
+
+        // 最低温度探针序号
+        Integer minTempProbeIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 24, 26));
+        extremeStatus.setProbeIndexOfMinTemperature(minTempProbeIndex);
+
+        // 最低温度值
+        Integer minTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 26, 28));
+        extremeStatus.setMinTemperature(minTemperature - 40);
+
+        return extremeStatus;
+    }
+
+    private GB32960AlertStatus parseAlertStatus(String alertData) {
+        log.info("解析报警数据: {}", alertData);
+
+        GB32960AlertStatus alertStatus = new GB32960AlertStatus();
+
+        // 最高报警等级
+        String highestAlertLevel = SubStringUtil.subStr(alertData, 0, 2);
+        switch (highestAlertLevel) {
+            case "00":
+                alertStatus.setHighestAlertLevel("LEVEL_0");
+                break;
+            case "01":
+                alertStatus.setHighestAlertLevel("LEVEL_1");
+                break;
+            case "02":
+                alertStatus.setHighestAlertLevel("LEVEL_2");
+                break;
+            case "03":
+                alertStatus.setHighestAlertLevel("LEVEL_3");
+                break;
+            case "FE":
+                alertStatus.setHighestAlertLevel("CLOSED");
+                break;
+            case "FF":
+                alertStatus.setHighestAlertLevel("INVALID");
+                break;
+            default:
+                alertStatus.setHighestAlertLevel("UNKNOWN");
+                break;
+        }
+
+        // 通用报警标识
+        String universalAlarmIdentification = SubStringUtil.subStr(alertData, 2, 10);
+        alertStatus.setUniversalAlarmIdentification(universalAlarmIdentification);
+
+        // 可充电储能装置故障总数
+        Integer energyStorageAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 10, 12));
+        alertStatus.setEnergyStorageAlertCount(energyStorageAlertCount);
+
+        if (energyStorageAlertCount > 0) {
+            List<Integer> energyStorageAlertList = new ArrayList<>();
+            for (int i = 0; i < energyStorageAlertCount; i++) {
+                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 12 + 4 * i, 12 + 4 * i + 4));
+                energyStorageAlertList.add(alertCode);
+            }
+            alertStatus.setEnergyStorageAlertList(energyStorageAlertList);
+        }
+
+        // 驱动电机故障总数
+        Integer driveMotorAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 12 + 4 * energyStorageAlertCount, 14 + 4 * energyStorageAlertCount));
+        alertStatus.setDriveMotorAlertCount(driveMotorAlertCount);
+
+        if (driveMotorAlertCount > 0) {
+            List<Integer> driveMotorAlertList = new ArrayList<>();
+            for (int i = 0; i < driveMotorAlertCount; i++) {
+                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 14 + 4 * energyStorageAlertCount + 4 * i, 14 + 4 * energyStorageAlertCount + 4 * i + 4));
+                driveMotorAlertList.add(alertCode);
+            }
+            alertStatus.setDriveMotorAlertList(driveMotorAlertList);
+        }
+
+        // 发动机故障总数
+        Integer engineAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 14 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount, 16 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount));
+        alertStatus.setEngineAlertCount(engineAlertCount);
+
+        if (engineAlertCount > 0) {
+            List<Integer> engineAlertList = new ArrayList<>();
+            for (int i = 0; i < engineAlertCount; i++) {
+                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 16 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * i, 16 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * i + 4));
+                engineAlertList.add(alertCode);
+            }
+            alertStatus.setEngineAlertList(engineAlertList);
+        }
+
+        // 其他故障总数
+        Integer otherAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 16 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * engineAlertCount, 18 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * engineAlertCount));
+        alertStatus.setOtherAlertCount(otherAlertCount);
+
+        if (otherAlertCount > 0) {
+            List<Integer> otherAlertList = new ArrayList<>();
+            for (int i = 0; i < otherAlertCount; i++) {
+                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 18 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * engineAlertCount + 4 * i, 18 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * engineAlertCount + 4 * i + 4));
+                otherAlertList.add(alertCode);
+            }
+            alertStatus.setOtherAlertList(otherAlertList);
+        }
+
+        return alertStatus;
+    }
+
+    private GB32960EnergyStorageVoltageStatus parseEnergyStorageVoltageStatus(String voltageData) {
+        log.info("解析电压数据: {}", voltageData);
+
+        GB32960EnergyStorageVoltageStatus voltageStatus = new GB32960EnergyStorageVoltageStatus();
+
+        Integer subSystemCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, 0, 2));
+        voltageStatus.setSubSystemOfEnergyStorageCount(subSystemCount);
+
+        List<GB32960EnergyStorageVoltages> voltagesList = new ArrayList<>();
+        int offset = 2;
+
+        for (int i = 0; i < subSystemCount; i++) {
+            GB32960EnergyStorageVoltages voltages = new GB32960EnergyStorageVoltages();
+
+            Integer subSystemIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 2));
+            voltages.setEnergyStorageSubSystemIndex(subSystemIndex);
+            offset += 2;
+
+            Integer energyStorageVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
+            voltages.setEnergyStorageVoltage(new BigDecimal(energyStorageVoltage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue());
+            offset += 4;
+
+            Integer energyStorageCurrent = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
+            voltages.setEnergyStorageCurrent(new BigDecimal(energyStorageCurrent).subtract(new BigDecimal(1000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue());
+            offset += 4;
+
+            Integer cellCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
+            voltages.setCellCount(cellCount);
+            offset += 4;
+
+            Integer frameCellStartIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
+            voltages.setFrameCellStartIndex(frameCellStartIndex);
+            offset += 4;
+
+            Integer frameCellCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 2));
+            voltages.setFrameCellCount(frameCellCount);
+            offset += 2;
+
+            List<Double> cellVoltages = new ArrayList<>();
+            for (int j = 0; j < frameCellCount; j++) {
+                Integer cellVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
+                cellVoltages.add(new BigDecimal(cellVoltage).divide(new BigDecimal("1000")).setScale(3, BigDecimal.ROUND_UP).doubleValue());
+                offset += 4;
+            }
+            voltages.setCellVoltages(cellVoltages);
+
+            voltagesList.add(voltages);
+        }
+
+        voltageStatus.setEnergyStorageVoltages(voltagesList);
+        return voltageStatus;
+    }
+
+    private GB32960EnergyStorageTemperatureStatus parseEnergyStorageTemperatureStatus(String temperatureData) {
+        log.info("解析温度数据: {}", temperatureData);
+
+        GB32960EnergyStorageTemperatureStatus temperatureStatus = new GB32960EnergyStorageTemperatureStatus();
+
+        Integer subSystemCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(temperatureData, 0, 2));
+        temperatureStatus.setSubEnergyStorageSystemCount(subSystemCount);
+
+        List<GB32960EnergyStorageTemperatures> temperaturesList = new ArrayList<>();
+        int offset = 2;
+
+        for (int i = 0; i < subSystemCount; i++) {
+            GB32960EnergyStorageTemperatures temperatures = new GB32960EnergyStorageTemperatures();
+
+            Integer subSystemIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(temperatureData, offset, offset + 2));
+            temperatures.setEnergyStorageSubSystemIndex1(subSystemIndex);
+            offset += 2;
+
+            Integer probeCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(temperatureData, offset, offset + 4));
+            temperatures.setProbeCount(probeCount);
+            offset += 4;
+
+            List<Integer> cellTemperatures = new ArrayList<>();
+            for (int j = 0; j < probeCount; j++) {
+                Integer cellTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(temperatureData, offset, offset + 2)) - 40;
+                cellTemperatures.add(cellTemperature);
+                offset += 2;
+            }
+            temperatures.setCellTemperatures(cellTemperatures);
+
+            temperaturesList.add(temperatures);
+        }
+
+        temperatureStatus.setEnergyStorageTemperatures(temperaturesList);
+        return temperatureStatus;
+    }
+
+
+    // 处理最终的数据实体，推送到 Kafka 或调用 API
+    private void processFinalData(GB32960BaseDTO data) {
+        //TODO 将数据推送到 Kafka 或其他 API
+        String jsonData = JSONUtil.toJsonStr(data);
+        // 示例：推送到 Kafka
+        // kafkaTemplate.send("topic_name", jsonData);
+        log.info("数据推送到 Kafka 或 API: {}", jsonData);
+    }
+
 
     /**
      * 生成响应数据的通用方法
      *
-     * @param msg         GB32960MessageData 消息对象
-     * @param msgResponse 响应命令
+     * @param msg GB32960MessageData 消息对象
      * @return 返回给客户端的响应数据
      */
-    private String generateResponse(GB32960MessageData msg, String msgResponse) {
-        // 设置响应命令
-        msg.setMsgResponse(msgResponse);
-
-        // 假设数据单元长度固定为6字节（这里根据具体情况修改）
-        msg.setDataCellLength("0006");
-
+    private String generateResponse(GB32960MessageData msg) {
         // 拼接需要计算校验码的数据内容
         StringBuilder checkCodeData = new StringBuilder()
                 .append(msg.getMsgCommand())
@@ -901,11 +1457,23 @@ public class GB32960DataParseServiceImpl implements GB32960DataParseService {
     /**
      * 带时间戳的响应生成
      *
-     * @param msg       消息对象
-     * @param timestamp 时间戳数据
+     * @param msg 消息对象
      * @return 拼接响应数据
      */
-    private String generateResponseWithTimestamp(GB32960MessageData msg, String timestamp) {
+    private String generateResponseWithTimestamp(GB32960MessageData msg) {
+        String data = msg.getData();
+        StringBuilder timestamp = new StringBuilder().append(SubStringUtil.subStrStart(data, 12));
+
+        StringBuilder checkCodeData = new StringBuilder()
+                .append(msg.getMsgCommand())
+                .append(msg.getMsgResponse())
+                .append(msg.getUniqueIdentifier())
+                .append(msg.getEncryption())
+                .append(msg.getDataCellLength())
+                .append(timestamp);
+
+        msg.setCheckCode(HexUtils.getBCC(checkCodeData.toString()));
+
         return new StringBuilder()
                 .append(msg.getMsgHead())
                 .append(msg.getMsgCommand())

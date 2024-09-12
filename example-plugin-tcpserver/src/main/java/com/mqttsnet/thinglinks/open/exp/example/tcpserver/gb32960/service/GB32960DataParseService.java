@@ -78,4 +78,12 @@ public interface GB32960DataParseService {
      * @return 处理后的响应数据字符串
      */
     String handleHeartbeat(GB32960MessageData msg);
+
+    /**
+     * 处理同步校时消息
+     *
+     * @param msg GB32960MessageData 消息对象
+     * @return 处理后的响应数据字符串
+     */
+    String handleTimeSynchronization(GB32960MessageData msg);
 }
