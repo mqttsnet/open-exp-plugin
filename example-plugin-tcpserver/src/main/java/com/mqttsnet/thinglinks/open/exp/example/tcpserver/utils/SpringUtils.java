@@ -35,7 +35,7 @@ public final class SpringUtils {
     }
 
     @Autowired
-    public static void setApplicationContext(ApplicationContext ctx) {
+    public void setApplicationContext(ApplicationContext ctx) {
         Assert.notNull(ctx, "SpringUtil injection ApplicationContext is null");
         applicationContext = ctx;
         parentApplicationContext = ctx.getParent();

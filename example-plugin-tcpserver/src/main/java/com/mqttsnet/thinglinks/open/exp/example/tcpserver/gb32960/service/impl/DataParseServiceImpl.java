@@ -877,7 +877,7 @@ public class DataParseServiceImpl implements DataParseService {
 
         GB32960BaseDTO gb32960BaseDTO = new GB32960BaseDTO();
         gb32960BaseDTO.setCommand("TERMINAL_VEHICLE_UPLOAD_REALTIME");
-        gb32960BaseDTO.setVin(HexUtils.convertHexToString(msg.getUniqueIdentifier()));
+        gb32960BaseDTO.setVin(msg.getUniqueIdentifier());
 
         // 解析采集时间
         String year = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
