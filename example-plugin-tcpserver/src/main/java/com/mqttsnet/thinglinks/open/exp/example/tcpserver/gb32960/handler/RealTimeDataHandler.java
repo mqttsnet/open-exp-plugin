@@ -1,6 +1,6 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.handler;
 
-import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.GB32960DataParseService;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.DataParseService;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -32,9 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RealTimeDataHandler extends ChannelInboundHandlerAdapter {
 
-    private final GB32960DataParseService parseService;
+    private final DataParseService parseService;
 
-    public RealTimeDataHandler(GB32960DataParseService parseService) {
+    public RealTimeDataHandler(DataParseService parseService) {
         this.parseService = parseService;
     }
 

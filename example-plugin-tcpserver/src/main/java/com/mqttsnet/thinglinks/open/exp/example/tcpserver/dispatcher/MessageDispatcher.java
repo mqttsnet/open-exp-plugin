@@ -1,12 +1,14 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcpserver.dispatcher;
 
-import io.netty.channel.ChannelHandler;
+import cn.hutool.core.util.StrUtil;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.entity.dao.GB32960MessageData;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.DataParseService;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.gb32960.service.impl.DataParseServiceImpl;
+import com.mqttsnet.thinglinks.open.exp.example.tcpserver.utils.SpringUtils;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
 
 /**
  * -----------------------------------------------------------------------------
@@ -29,67 +31,49 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2024/9/8 18:54
  */
 @Slf4j
-public class MessageDispatcher extends ChannelInboundHandlerAdapter {
-
-    // 使用线程安全的 ConcurrentHashMap 存储消息类型和处理器
-    private final Map<String, ChannelHandler> handlerMap = new ConcurrentHashMap<>();
-
-    /**
-     * 为特定的协议类型注册处理器。
-     *
-     * @param protocolType 协议类型的字符串
-     * @param handler      处理该协议类型的处理器
-     */
-    public void registerHandler(String protocolType, ChannelHandler handler) {
-        handlerMap.put(protocolType, handler);
-    }
+@Component
+public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960MessageData> {
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (!(msg instanceof String)) {
-            log.warn("Received message is not of type String: {}", msg.getClass().getSimpleName());
-            ctx.fireChannelRead(msg); // 将消息传递给下一个处理器
-            return;
+    protected void channelRead0(ChannelHandlerContext ctx, GB32960MessageData msg) throws Exception {
+        DataParseService dataParseService = SpringUtils.getBean(DataParseServiceImpl.class);
+        String msgCommand = msg.getMsgCommand();
+        String response = "";
+
+        // 根据消息命令分发到不同的处理方法
+        switch (msgCommand) {
+            case "01": // 处理车辆登录消息
+                response = dataParseService.handleVehicleLogin(msg);
+                break;
+            case "02": // 处理实时信息上报
+                response = dataParseService.handleRealtimeData(msg);
+                break;
+            case "03": // 处理补发信息上报
+                response = dataParseService.handleSupplementaryData(msg);
+                break;
+            case "04": // 处理车辆登出
+                response = dataParseService.handleVehicleLogout(msg);
+                break;
+            case "05": // 处理平台登录
+                response = dataParseService.handlePlatformLogin(msg);
+                break;
+            case "06": // 处理平台登出
+                response = dataParseService.handlePlatformLogout(msg);
+                break;
+            case "07": // 处理心跳
+                response = dataParseService.handleHeartbeat(msg);
+                break;
+            case "08": // 同步校时
+                response = dataParseService.handleTimeSynchronization(msg);
+                break;
+            default:
+                log.warn("未处理的 GB32960 消息类型: {}", msgCommand);
+                break;
         }
 
-        String message = (String) msg;
-        String protocolType = extractProtocolType(message);  // 提取协议类型
-
-        ChannelHandler handler = handlerMap.get(protocolType);
-
-        if (handler != null) {
-            log.info("Dispatching message of type {} to handler {}", protocolType, handler.getClass().getSimpleName());
-
-            // 调用相应的处理器
-            if (handler instanceof ChannelInboundHandlerAdapter) {
-                ((ChannelInboundHandlerAdapter) handler).channelRead(ctx, msg);
-            } else {
-                log.warn("Handler for protocol type {} is not a valid inbound handler", protocolType);
-            }
-
-            // 处理完毕，不传递给下一个 Handler
-            return;  // 停止消息继续传播
-        }
-
-        // 如果没有匹配到处理器，传递消息给下一个处理器
-        log.warn("No handler found for protocol type: {}", protocolType);
-        ctx.fireChannelRead(msg);  // 传递给下一个 Handler
-    }
-
-    /**
-     * 根据消息内容提取协议类型
-     *
-     * @param msg 消息内容
-     * @return 协议类型字符串
-     */
-    private String extractProtocolType(String msg) {
-        // 示例：假设前两个字符是协议类型标识符
-        if (msg.startsWith("2323")) {
-            return "GB32960-RealTimeData";
-        } else if (msg.startsWith("2424")) {
-            return "GB32960-AlarmData";
-        } else {
-            return "Unknown";
+        // 如果有响应数据，返回给客户端
+        if (StrUtil.isNotBlank(response)) {
+            ctx.writeAndFlush(response);
         }
     }
 }

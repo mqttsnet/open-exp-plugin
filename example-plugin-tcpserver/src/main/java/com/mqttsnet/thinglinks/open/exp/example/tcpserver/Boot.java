@@ -9,6 +9,11 @@ import com.mqttsnet.thinglinks.open.exp.plugin.depend.AbstractBoot;
 public class Boot extends AbstractBoot {
 
     /**
+     * 租户ID
+     */
+    public static ConfigSupport tenantId = new ConfigSupport("plugin.tenantId", "1");
+
+    /**
      * TCP Server 启动的端口号
      */
     public static ConfigSupport tcpPort = new ConfigSupport("tcp.port", "18081");

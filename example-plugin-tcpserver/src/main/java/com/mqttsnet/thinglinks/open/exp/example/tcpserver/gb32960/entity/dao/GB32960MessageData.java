@@ -22,41 +22,40 @@ public class GB32960MessageData {
 
 
     /**
-     *命令标识
+     * 命令标识
      */
     private String msgCommand;
 
     /**
-     *应答标识
+     * 应答标识
      */
     private String msgResponse;
 
     /**
-     *唯一识别码
+     * 唯一识别码
      */
     private String uniqueIdentifier;
 
 
     /**
-     *加密方式
+     * 加密方式
      */
     private String encryption;
 
 
     /**
-     *数据单元长度
+     * 数据单元长度
      */
     private String dataCellLength;
 
     /**
-     *数据单元
+     * 数据单元
      */
     private String data;
 
 
     /**
-     *校验码
+     * 校验码
      */
     private String checkCode;
-
 }
