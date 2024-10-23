@@ -23,7 +23,7 @@
 
 **示例**:
 ```bash
-curl http://localhost:8080/base/hello
+curl http://localhost:18888/base/hello
 ```
 
 **响应**:
@@ -48,7 +48,7 @@ curl http://localhost:8080/base/hello
 
 **示例**:
 ```bash
-curl "http://localhost:8080/base/run?tenantId=12345"
+curl "http://localhost:18888/base/run?tenantId=12345"
 ```
 
 **响应**:
@@ -70,7 +70,7 @@ curl "http://localhost:8080/base/run?tenantId=12345"
 
 **示例**:
 ```bash
-curl "http://localhost:8080/base/preload?path=http://example.com/plugins/example-plugin.jar"
+curl "http://localhost:18888/base/preload?path=http://example.com/plugins/example-plugin.jar"
 ```
 
 **响应**:
@@ -97,7 +97,7 @@ curl "http://localhost:8080/base/preload?path=http://example.com/plugins/example
 
 **示例**:
 ```bash
-curl "http://localhost:8080/base/install?path=http://example.com/plugins/example-plugin.jar&tenantId=12345"
+curl "http://localhost:18888/base/install?path=http://example.com/plugins/example-plugin.jar&tenantId=12345"
 ```
 
 **响应**:
@@ -123,7 +123,7 @@ curl "http://localhost:8080/base/install?path=http://example.com/plugins/example
 
 **示例**:
 ```bash
-curl "http://localhost:8080/base/unInstall?pluginId=example-plugin_1.0.0"
+curl "http://localhost:18888/base/unInstall?pluginId=example-plugin_1.0.0"
 ```
 
 **响应**:
