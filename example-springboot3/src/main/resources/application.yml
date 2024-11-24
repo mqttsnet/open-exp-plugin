@@ -1,3 +1,4 @@
+exp_enable: true
 plugins_path: exp-plugins
 plugins_work_dir: exp-workdir
 plugins_spring_url_replace_enable: true
