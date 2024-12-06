@@ -28,9 +28,9 @@
         <module>example-plugin-tcpserver</module>
 
         <!--   以下模块用到需要用哪个插件示例就取消注释即可，用不到的就可以注释，以免影响调试   -->
-<!--        <module>example-plugin-udpserver</module>-->
-<!--        <module>example-plugin-tcptomqtt</module>-->
-<!--        <module>example-plugin-udptomqtt</module>-->
+        <!--        <module>example-plugin-tcptomqtt</module>-->
+        <!--        <module>example-plugin-udpserver</module>-->
+        <!--        <module>example-plugin-udptomqtt</module>-->
 
         <!--   调试运行主程序     -->
         <module>example-springboot3</module>
@@ -73,8 +73,6 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
-
-
 
 
 </project>
