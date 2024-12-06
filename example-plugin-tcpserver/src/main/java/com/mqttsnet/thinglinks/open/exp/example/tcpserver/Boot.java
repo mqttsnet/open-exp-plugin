@@ -16,7 +16,7 @@ public class Boot extends AbstractBoot {
     /**
      * TCP Server 启动的端口号
      */
-    public static ConfigSupport tcpPort = new ConfigSupport("tcp.port", "18081");
+    public static ConfigSupport tcpPort = new ConfigSupport("tcp.port", "50100");
 
     /**
      * Netty Worker线程数

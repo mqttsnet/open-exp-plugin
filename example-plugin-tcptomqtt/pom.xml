@@ -40,34 +40,39 @@
         </dependency>
 
 
-        <!-- https://mvnrepository.com/artifact/cn.hutool/hutool-all -->
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-            <version>5.8.32</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>4.1.108.Final</version> <!-- 使用最新的版本 -->
-        </dependency>
-
+        <!-- Jakarta 持久化 API -->
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
             <version>3.1.0</version>
         </dependency>
+
+        <!-- Jakarta 校验 API -->
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
             <version>3.1.0</version>
         </dependency>
+
+        <!-- Jakarta 注解 API -->
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
             <version>2.1.1</version>
             <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.107.Final</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.70</version>
         </dependency>
 
         <!-- Paho MQTT 客户端 -->
@@ -95,6 +100,10 @@
                                 <include>com.mqttsnet.thinglinks:example-extension-define</include>
                                 <!--       三方依赖                     -->
                                 <include>io.netty:netty-all</include>
+                                <include>jakarta.persistence:jakarta.persistence-api</include>
+                                <include>jakarta.validation:jakarta.validation-api</include>
+                                <include>jakarta.annotation:jakarta.annotation-api</include>
+                                <include>org.bouncycastle:bcprov-jdk15on</include>
                                 <include>org.eclipse.paho:org.eclipse.paho.client.mqttv3</include>
                             </includes>
                         </filter>
