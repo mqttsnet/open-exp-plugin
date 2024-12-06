@@ -83,7 +83,6 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <plugins>
             <!-- maven-shade-plugin: 用于打包项目并移除重复的依赖 -->
