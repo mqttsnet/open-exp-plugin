@@ -10,6 +10,11 @@
     </parent>
 
     <artifactId>example-extension-define</artifactId>
+    <version>1.0.0</version>
+
+    <name>${project.artifactId}</name>
+    <url>https://www.mqttsnet.com</url>
+    <description>example-extension-define 扩展接口定义</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

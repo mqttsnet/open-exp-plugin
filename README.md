@@ -38,7 +38,7 @@
 
 5. **Start the Main Application**: Run the `Main` class in the `example-springboot3` module.
 
-   The main application will automatically load and install the packaged plugins. If you need to reinstall or uninstall plugins, simply call the relevant API.
+   The main application will automatically load and install the packaged plugins（That is, plugins in the exp-plugins directory）. If you need to reinstall or uninstall plugins, simply call the relevant API.
 
 ### Notes
 
