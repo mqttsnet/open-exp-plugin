@@ -794,6 +794,10 @@ public class DataParseServiceImpl implements DataParseService {
     @Override
     public String handleVehicleLogin(GB32960MessageData msg) {
         log.info("【GB32960】处理车辆登录消息: {}", msg);
+
+        // 车辆唯一标识
+        String uniqueIdentifier = msg.getUniqueIdentifier();
+
         msg.setMsgResponse("01");
         msg.setDataCellLength("0006");
         return generateResponseWithTimestamp(msg);
@@ -1462,6 +1466,7 @@ public class DataParseServiceImpl implements DataParseService {
      */
     private String generateResponseWithTimestamp(GB32960MessageData msg) {
         String data = msg.getData();
+        //数据单元-时间获取
         StringBuilder timestamp = new StringBuilder().append(SubStringUtil.subStrStart(data, 12));
 
         StringBuilder checkCodeData = new StringBuilder()

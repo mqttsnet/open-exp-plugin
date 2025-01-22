@@ -35,7 +35,7 @@ public class TcpServer {
      */
     public void start(int port) throws Exception {
         // Boss线程组：用于处理连接请求
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        EventLoopGroup bossGroup = new NioEventLoopGroup(4);
 
         // Worker线程组：用于处理连接后的I/O事件
         EventLoopGroup workerGroup = new NioEventLoopGroup(Integer.parseInt(Boot.workerThreads.getDefaultValue()));
