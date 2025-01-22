@@ -18,17 +18,19 @@
     </description>
 
     <modules>
-        <!--  扩展接口定义模块，此依赖项不要去除，因为其他子模块都进行了依赖    -->
+        <!--  扩展接口定义模块(example-extension)，此依赖项不要去除，因为其他子模块都进行了依赖    -->
         <module>example-extension-define</module>
 
-        <!--   插件示例 demo     -->
+        <module>example-extension-mqttclient</module>
+
+        <!--   插件示例 demo(极简插件框架包，新插件可复制此模块进行开发)   -->
         <module>example-plugin-demo</module>
 
         <!--  TCP 协议插件示例      -->
-        <module>example-plugin-tcpserver</module>
+<!--        <module>example-plugin-tcpserver</module>-->
 
         <!--   以下模块用到需要用哪个插件示例就取消注释即可，用不到的就可以注释，以免影响调试   -->
-        <!--        <module>example-plugin-tcptomqtt</module>-->
+                <module>example-plugin-tcptomqtt</module>
         <!--        <module>example-plugin-udpserver</module>-->
         <!--        <module>example-plugin-udptomqtt</module>-->
 

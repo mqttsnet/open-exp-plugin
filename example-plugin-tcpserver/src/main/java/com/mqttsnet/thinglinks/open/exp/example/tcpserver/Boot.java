@@ -37,4 +37,19 @@ public class Boot extends AbstractBoot {
      * SO_KEEPALIVE: 是否开启TCP KeepAlive
      */
     public static ConfigSupport soKeepAlive = new ConfigSupport("netty.soKeepAlive", "true");
+
+
+    /**
+     * 认证鉴权URL
+     */
+    public static ConfigSupport authProviderConfigConnectionUrl = new ConfigSupport("thinglinks.authProviderConfig.authConnectionUrl", "http://127.0.0.1:18760/link/anyTenant/deviceOpen/clientConnectionAuthentication");
+
+
+    /**
+     * 事件收集 kafka服务地址
+     * 用于推送tcp事件到kafka
+     */
+    public static ConfigSupport eventCollectorConfigKafkaBootstrapServer = new ConfigSupport("thinglinks.eventCollectorConfig.kafkaBootstrapServer", "124.223.113.139:9092");
+
+
 }
