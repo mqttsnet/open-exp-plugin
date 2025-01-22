@@ -1,8 +1,6 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcptomqtt;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -16,9 +14,11 @@ import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.callback.Mq
 import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.callback.MqttReceiveCallbackResult;
 import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.callback.MqttSendCallbackResult;
 import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.constant.MqttVersion;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.mqtt.event.publisher.MqttEventPublisher;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -26,16 +26,26 @@ import org.springframework.stereotype.Component;
  * 组件管理总线
  */
 
+@Getter
 @Slf4j
 @Component
 public class MyComponent {
 
     private final ScheduledExecutorService tcpServerExecutor = new ScheduledThreadPoolExecutor(10);
+
     private final ScheduledExecutorService scheduledTaskExecutor = new ScheduledThreadPoolExecutor(10);
 
     private static final MqttClientFactory mqttClientFactory = new DefaultMqttClientFactory();
 
+    private final MqttEventPublisher mqttEventPublisher;
+
+
+    private MqttClient mqttClient = null;
     private TcpServer tcpServer = null;
+
+    public MyComponent(MqttEventPublisher mqttEventPublisher) {
+        this.mqttEventPublisher = mqttEventPublisher;
+    }
 
     @PostConstruct
     public void init() {
@@ -88,7 +98,6 @@ public class MyComponent {
             String username = Boot.mqttClientUsername.getDefaultValue();
             String password = Boot.mqttClientPassword.getDefaultValue();
             String mqttTopicDefaultValue = Boot.mqttClientTopic.getDefaultValue();
-            byte[] payload = "ThingLinks".getBytes(StandardCharsets.UTF_8);
             MqttQoS mqttQoS = MqttQoS.EXACTLY_ONCE;
 
             // 设置连接参数
@@ -103,37 +112,18 @@ public class MyComponent {
             mqttConnectParameter.setAutoReconnect(true);
 
             // 创建 MQTT 客户端
-            MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
+            mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
 
             // 添加回调函数，处理消息发送和接收
             mqttClient.addMqttCallback(new MqttCallback() {
                 @Override
                 public void messageSendCallback(MqttSendCallbackResult mqttSendCallbackResult) {
-                    String topic = mqttSendCallbackResult.getTopic();
-                    MqttQoS qos = mqttSendCallbackResult.getQos();
-                    byte[] payload = mqttSendCallbackResult.getPayload();
-
-                    // 判断发送的消息是否匹配指定的条件
-                    if (Arrays.equals(payload, payload) && mqttTopicDefaultValue.equals(topic) && mqttQoS.equals(qos)) {
-                        log.info("消息发送成功！");
-                    }
+                    mqttEventPublisher.publishMqttMessageSendEvent(mqttSendCallbackResult.getTopic(), mqttSendCallbackResult.getPayload(), mqttSendCallbackResult.getQos());
                 }
 
                 @Override
                 public void messageReceiveCallback(MqttReceiveCallbackResult receiveCallbackResult) {
-                    // 获取接收到的消息的相关信息
-                    byte[] payload = receiveCallbackResult.getPayload();
-                    String topic = receiveCallbackResult.getTopic();
-                    MqttQoS qos = receiveCallbackResult.getQos();
-
-                    // 输出接收到的消息
-                    log.info("接收到消息：Topic = {}, QoS = {}, Payload = {}", topic, qos, new String(payload));
-
-                    // 判断接收到的消息是否符合预期条件
-                    if (mqttTopicDefaultValue.equals(topic) && mqttQoS.equals(qos)) {
-                        // 处理接收到的消息
-                        handleReceivedMessage(payload);
-                    }
+                    mqttEventPublisher.publishMqttMessageReceiveEvent(receiveCallbackResult.getTopic(), receiveCallbackResult.getPayload(), receiveCallbackResult.getQos());
                 }
             });
 
@@ -144,27 +134,11 @@ public class MyComponent {
             mqttClient.subscribe(mqttTopicDefaultValue, mqttQoS);
             log.info("订阅成功：Topic = {}, QoS = {}", mqttTopicDefaultValue, mqttQoS);
 
-            // 发布消息
-            mqttClient.publish(payload, mqttTopicDefaultValue, mqttQoS);
-            log.info("消息发送：Topic = {}, Payload = {}", mqttTopicDefaultValue, new String(payload));
-
             // 在这里不再需要阻塞线程，客户端会通过回调不断接收消息并处理
         } catch (Exception e) {
             log.error("发生异常：连接 MQTT 服务器失败: " + e.getMessage(), e);
         }
     }
-
-
-    // 处理接收到的消息
-    private void handleReceivedMessage(byte[] payload) {
-        // 在这里可以添加自定义的消息处理逻辑
-        String receivedMessage = new String(payload, StandardCharsets.UTF_8);
-        log.info("处理接收到的消息: {}", receivedMessage);
-
-        // 可以根据消息内容进行进一步的业务处理
-        // 比如解析 JSON 数据，更新 UI，或者触发其他操作
-    }
-
 
     /**
      * 发送 MQTT 心跳
@@ -175,6 +149,9 @@ public class MyComponent {
 
             // 发送心跳 到 插件服务器
 //            sendMqttHeartbeat(Boot.mqttDeviceIdentification.getDefaultValue());
+
+            //阻塞发送消息
+//            mqttClient.publish(new byte[]{1, 2, 3}, Boot.mqttClientTopic.getDefaultValue(), MqttQoS.EXACTLY_ONCE, true);
 
             log.info("Heartbeat sent successfully at {}", LocalDateTime.now());
         } catch (Exception e) {

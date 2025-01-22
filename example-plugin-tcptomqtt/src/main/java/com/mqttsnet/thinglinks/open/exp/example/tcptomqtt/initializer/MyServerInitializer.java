@@ -1,7 +1,8 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.initializer;
 
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.decoder.GB32960Decoder;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.dispatcher.MessageDispatcher;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.handler.ExceptionHandler;
-import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.handler.MyServerHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -60,16 +61,14 @@ public class MyServerInitializer extends ChannelInitializer<SocketChannel> {
 
 
         // 添加 GB32960 协议解码器，解决粘包和拆包问题
-//        pipeline.addLast(new GB32960Decoder());
+        pipeline.addLast(new GB32960Decoder());
 
-        // 添加业务逻辑处理器，处理解码后的消息
-//        pipeline.addLast(new MessageDispatcher());
 
         // 将字节流转换为字符串
         pipeline.addLast(new StringDecoder());  // 解析 ByteBuf 为 String
 
-        // 添加自定义的服务器处理器，处理连接、断开、异常等事件
-        pipeline.addLast(new MyServerHandler()); // 自定义的 handler
+        // 添加业务逻辑处理器，处理解码后的消息
+        pipeline.addLast(new MessageDispatcher());
 
         // 添加异常处理器
         pipeline.addLast(new ExceptionHandler());
