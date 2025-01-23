@@ -18,9 +18,16 @@ public class GB32960TransmissionStatus {
     /**
      * 档位
      */
-    private Integer gear;
+    private String gear;
 
+    /**
+     * 有驱动力
+     */
     private boolean hasDriverForce;
+
+    /**
+     * 有制动力
+     */
     private boolean hasBrakingForce;
 
 }

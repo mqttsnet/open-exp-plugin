@@ -17,6 +17,13 @@ import lombok.Data;
 @Data
 public class GB32960DriveMotorStatus {
 
+    /**
+     * 驱动电机个数
+     */
     private Integer driveMotorCount;
+
+    /**
+     * 驱动电机总 成信息列表
+     */
     private List<GB32960DriveMotors> driveMotors;
 }

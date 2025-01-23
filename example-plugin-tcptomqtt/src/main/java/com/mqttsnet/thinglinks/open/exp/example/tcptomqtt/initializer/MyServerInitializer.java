@@ -6,7 +6,6 @@ import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.handler.ExceptionHandl
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -62,10 +61,6 @@ public class MyServerInitializer extends ChannelInitializer<SocketChannel> {
 
         // 添加 GB32960 协议解码器，解决粘包和拆包问题
         pipeline.addLast(new GB32960Decoder());
-
-
-        // 将字节流转换为字符串
-        pipeline.addLast(new StringDecoder());  // 解析 ByteBuf 为 String
 
         // 添加业务逻辑处理器，处理解码后的消息
         pipeline.addLast(new MessageDispatcher());

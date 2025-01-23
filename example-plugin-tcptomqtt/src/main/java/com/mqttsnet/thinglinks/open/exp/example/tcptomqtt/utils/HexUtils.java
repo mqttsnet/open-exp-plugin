@@ -6,198 +6,175 @@ import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.utils.bytes.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * @author thinglinks
  * @title 16进制相关工具类
  * @discribtion 本着依赖最少原则，封装常用工具类
- * @author thinglinks
  * @Date 2020年5月21日 下午4:31:17
  * @vision V1.0
  */
 @Slf4j
-public class HexUtils
-{
+public class HexUtils {
     /**
+     * @param
      * @title byte数组转16进制字符串
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午4:36:49
      * @vision V1.0
      */
-    public static String byteArr2HexStr(byte[] byteArr)
-    {
-        if (byteArr == null)
-        {
+    public static String byteArr2HexStr(byte[] byteArr) {
+        if (byteArr == null) {
             return null;
         }
         char[] hexArray = "0123456789ABCDEF".toCharArray();
         char[] hexChars = new char[byteArr.length * 2];
-        for (int j = 0; j < byteArr.length; j++)
-        {
+        for (int j = 0; j < byteArr.length; j++) {
             int v = byteArr[j] & 0xFF;
             hexChars[j * 2] = hexArray[v >>> 4];
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
     }
-    
+
     /**
+     * @param
      * @title 16进制字符串转byte数组
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午4:39:00
      * @vision V1.0
      */
-    public static byte[] hexStr2ByteArr(String hexStr)
-    {
-        if (hexStr == null)
-        {
+    public static byte[] hexStr2ByteArr(String hexStr) {
+        if (hexStr == null) {
             return null;
         }
-        if (hexStr.length() == 0)
-        {
+        if (hexStr.length() == 0) {
             return new byte[0];
         }
         byte[] byteArray = new byte[hexStr.length() / 2];
-        for (int i = 0; i < byteArray.length; i++)
-        {
+        for (int i = 0; i < byteArray.length; i++) {
             String subStr = hexStr.substring(2 * i, 2 * i + 2);
-            byteArray[i] = ((byte)Integer.parseInt(subStr, 16));
+            byteArray[i] = ((byte) Integer.parseInt(subStr, 16));
         }
         return byteArray;
     }
-    
+
     /**
+     * @param
      * @title 合并多个byte数组
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午4:41:36
      * @vision V1.0
      */
-    public static byte[] mergeAllBytes(byte[]... values)
-    {
+    public static byte[] mergeAllBytes(byte[]... values) {
         int length_byte = 0;
-        for (int i = 0; i < values.length; i++)
-        {
+        for (int i = 0; i < values.length; i++) {
             length_byte += values[i].length;
         }
         byte[] all_byte = new byte[length_byte];
         int countLength = 0;
-        for (int i = 0; i < values.length; i++)
-        {
+        for (int i = 0; i < values.length; i++) {
             byte[] b = values[i];
             System.arraycopy(b, 0, all_byte, countLength, b.length);
             countLength += b.length;
         }
         return all_byte;
     }
-    
+
     /**
+     * @param
      * @title 异或校验
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午4:47:40
      * @vision V1.0
      */
-    public static byte getXor(byte[] datas)
-    {
+    public static byte getXor(byte[] datas) {
         byte temp = datas[0];
-        for (int i = 1; i < datas.length; i++)
-        {
+        for (int i = 1; i < datas.length; i++) {
             temp ^= datas[i];
         }
         return temp;
     }
-    
+
     /**
+     * @param
      * @title 16进制字符串转整数
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午4:54:15
      * @vision V1.0
      */
-    public static int hexStr2Int(String hexStr)
-    {
+    public static int hexStr2Int(String hexStr) {
         return Integer.parseInt(hexStr, 16);
     }
-    
+
     /**
+     * @param
      * @title 整数转16进制字符串
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午4:54:54
      * @vision V1.0
      */
-    public static String int2HexStr(int num)
-    {
+    public static String int2HexStr(int num) {
         return Integer.toHexString(num);
     }
-    
+
     /**
+     * @param
      * @title 16进制字符串转2进制字符串
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午5:21:30
      * @vision V1.0
      */
-    public static String hexStr2BinStr(String hexStr)
-    {
-        if (hexStr == null || hexStr.length() % 2 != 0)
-        {
+    public static String hexStr2BinStr(String hexStr) {
+        if (hexStr == null || hexStr.length() % 2 != 0) {
             return null;
         }
         String bString = "", tmp;
-        for (int i = 0; i < hexStr.length(); i++)
-        {
+        for (int i = 0; i < hexStr.length(); i++) {
             tmp = "0000" + Integer.toBinaryString(Integer.parseInt(hexStr.substring(i, i + 1), 16));
             bString += tmp.substring(tmp.length() - 4);
         }
         return bString;
     }
-    
+
     /**
+     * @param
      * @title 2进制字符串转16进制字符串
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午5:21:49
      * @vision V1.0
      */
-    public static String binStr2HexStr(String binStr)
-    {
-        if (binStr == null || binStr.equals("") || binStr.length() % 8 != 0)
-        {
+    public static String binStr2HexStr(String binStr) {
+        if (binStr == null || binStr.equals("") || binStr.length() % 8 != 0) {
             return null;
         }
         StringBuffer tmp = new StringBuffer();
         int iTmp = 0;
-        for (int i = 0; i < binStr.length(); i += 4)
-        {
+        for (int i = 0; i < binStr.length(); i += 4) {
             iTmp = 0;
-            for (int j = 0; j < 4; j++)
-            {
+            for (int j = 0; j < 4; j++) {
                 iTmp += Integer.parseInt(binStr.substring(i + j, i + j + 1)) << (4 - j - 1);
             }
             tmp.append(Integer.toHexString(iTmp));
         }
         return tmp.toString();
     }
-    
+
     /**
+     * @param
      * @title 字节转位
      * @discribtion
      * @author zch
-     * @param
      * @Date 2020年5月21日 下午5:23:29
      * @vision V1.0
      */
-    public static String byte2Bit(byte by)
-    {
+    public static String byte2Bit(byte by) {
         // @formatter:off
         StringBuffer sb = new StringBuffer();
         sb.append((by >> 7) & 0x1)
@@ -211,23 +188,23 @@ public class HexUtils
         // @formatter:on
         return sb.toString();
     }
+
     /**
      * @Description: 16进制字符串转10进制
      * @Param: [hex]
      * @return: java.lang.String
-     * @Author: Liang Shan
+     * @author thinglinks
      * @Date: 2019/9/24 0024
      */
     public static Integer hexStringToDecimal(String hex) {
-        Integer result = Integer.valueOf(hex, 16);
-        return result;
+        return Integer.valueOf(hex, 16);
     }
 
     /**
      * @Description: 16进制字符串转2进制字符串
      * @Param: [hex]
      * @return: java.lang.String
-     * @Author: Liang Shan
+     * @author thinglinks
      * @Date: 2019/9/24 0024
      */
     public static String hexStringToBinaryString(String hex) {
@@ -240,7 +217,7 @@ public class HexUtils
      * @Description: 10进制转16进制字符串
      * @Param: []
      * @return: java.lang.String
-     * @Author: Liang Shan
+     * @author thinglinks
      * @Date: 2019/9/24 0024
      */
     public static String decimalToHexString(Integer decimal) {
@@ -252,7 +229,7 @@ public class HexUtils
      * @Description: 10进制转2进制字符串
      * @Param: []
      * @return: java.lang.String
-     * @Author: Liang Shan
+     * @author thinglinks
      * @Date: 2019/9/24 0024
      */
     public static String decimalToBinaryString(Integer decimal) {
@@ -264,7 +241,7 @@ public class HexUtils
      * @Description: 2进制字符串转10进制
      * @Param: [hex]
      * @return: java.lang.String
-     * @Author: Liang Shan
+     * @author thinglinks
      * @Date: 2019/9/24 0024
      */
     public static Integer binaryStringToDecimal(String binary) {
@@ -276,7 +253,7 @@ public class HexUtils
      * @Description: 2进制字符串转16进制字符串
      * @Param: []
      * @return: java.lang.String
-     * @Author: Liang Shan
+     * @author thinglinks
      * @Date: 2019/9/24 0024
      */
     public static String binaryStringToHexString(String binary) {
@@ -289,7 +266,7 @@ public class HexUtils
      * @Description: byte[]转字符串
      * @Param: [bytes]
      * @return: java.lang.String
-     * @Author: Liang Shan
+     * @author thinglinks
      * @Date: 2019/9/20 0020
      */
     public static String byte2Hex(byte[] bytes) {
@@ -310,7 +287,7 @@ public class HexUtils
      * @Description: byte[]转String[]
      * @Param: [bytes]
      * @return: java.lang.String[]
-     * @Author: Liang Shan
+     * @author thinglinks
      * @Date: 2019/9/20 0020
      */
     public static String[] bytesToStrings(byte[] bytes) {
@@ -328,23 +305,24 @@ public class HexUtils
 
     /**
      * 16进制转换为ASCII
+     *
      * @param hex
      * @return
      */
-    public static String convertHexToString(String hex){
+    public static String convertHexToString(String hex) {
 
         StringBuilder sb = new StringBuilder();
         StringBuilder temp = new StringBuilder();
 
         //49204c6f7665204a617661 split into two characters 49, 20, 4c...
-        for( int i=0; i<hex.length()-1; i+=2 ){
+        for (int i = 0; i < hex.length() - 1; i += 2) {
 
             //grab the hex in pairs
             String output = hex.substring(i, (i + 2));
             //convert hex to decimal
             int decimal = Integer.parseInt(output, 16);
             //convert the decimal to character
-            sb.append((char)decimal);
+            sb.append((char) decimal);
 
             temp.append(decimal);
         }
@@ -423,20 +401,20 @@ public class HexUtils
     /**
      * 十六进制单精度浮点数，转BigDecimal，保留2为小数，截掉多余小数位
      *
-     * @param hex 十六进制
+     * @param hex   十六进制
      * @param scale 保留小数位
      * @return
      */
-    public static Double hexFloat2BigDecimal(String hex,Integer scale) {
+    public static Double hexFloat2BigDecimal(String hex, Integer scale) {
         float value = Float.intBitsToFloat((int) Long.parseLong(hex, 16));
         BigDecimal bd = new BigDecimal(Float.toString(value));
         Double num = bd.setScale(scale, BigDecimal.ROUND_HALF_UP).doubleValue();
         return num;
     }
 
-    public static void main(String[] args) {
+   /* public static void main(String[] args) {
         System.out.println("\n***** 16进制转换为ASCII *****");
         System.out.println("Hex : " + "4c464341483935570344d33303130303936");
         System.out.println("ASCII : " + HexUtils.convertHexToString("4c464341483935570344d33303130303936"));
-    }
+    }*/
 }

@@ -55,8 +55,20 @@ public class GB32960VehicleStatus {
      * 档位信息
      */
     private GB32960TransmissionStatus transmissionStatus;
+
+    /**
+     * 绝缘电阻
+     */
     private Integer insulationResistance;
+
+    /**
+     * 加速踏板行程
+     */
     private Integer accelerationPedalTravel;
+
+    /**
+     * 制动踏板状态
+     */
     private Integer brakePedalState;
 
 }

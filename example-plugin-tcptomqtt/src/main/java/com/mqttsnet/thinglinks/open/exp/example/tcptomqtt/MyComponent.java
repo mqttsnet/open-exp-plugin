@@ -145,15 +145,11 @@ public class MyComponent {
      */
     private void sendHeartbeat() {
         try {
-            log.info("Preparing to send heartbeat at {} with IP: {}", LocalDateTime.now(), NetUtil.getLocalhostStr());
+            log.info("example-plugin-tcptomqtt Heartbeat sent successfully at at {} with IP: {}", LocalDateTime.now(), NetUtil.getLocalhostStr());
 
             // 发送心跳 到 插件服务器
 //            sendMqttHeartbeat(Boot.mqttDeviceIdentification.getDefaultValue());
 
-            //阻塞发送消息
-//            mqttClient.publish(new byte[]{1, 2, 3}, Boot.mqttClientTopic.getDefaultValue(), MqttQoS.EXACTLY_ONCE, true);
-
-            log.info("Heartbeat sent successfully at {}", LocalDateTime.now());
         } catch (Exception e) {
             log.error("Failed to send heartbeat at {}", LocalDateTime.now(), e);
         }

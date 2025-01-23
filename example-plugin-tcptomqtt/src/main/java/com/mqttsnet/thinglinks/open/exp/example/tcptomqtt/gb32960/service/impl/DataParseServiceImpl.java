@@ -11,11 +11,29 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.json.JSONUtil;
-import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.*;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.Boot;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960AlertStatus;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960BaseDTO;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960DriveMotorStatus;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960DriveMotors;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960EnergyStorageTemperatureStatus;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960EnergyStorageTemperatures;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960EnergyStorageVoltageStatus;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960EnergyStorageVoltages;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960ExtremeStatus;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960LocateStatus;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960LocationStatus;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960MessageData;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960TransmissionStatus;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960VehicleStatus;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.service.DataParseService;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.mqtt.event.publisher.MqttEventPublisher;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.utils.HexUtils;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.utils.SpringUtils;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.utils.SubStringUtil;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -33,9 +51,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class DataParseServiceImpl implements DataParseService {
-
-   /* @Autowired
-    private RedisService redisService;*/
 
     /**
      * 实时数据解析并返回数据
@@ -260,11 +275,7 @@ public class DataParseServiceImpl implements DataParseService {
                 vehicleStatus.setCurrent(current);
                 //SOC
                 Integer vehicleStatusSoc = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 40, 42));
-                switch (vehicleStatusSoc) {
-                    default:
-                        vehicleStatus.setSoc(vehicleStatusSoc);
-                        break;
-                }
+                vehicleStatus.setSoc(vehicleStatusSoc);
                 //DC-DC状态
                 String vehicleStatusDcStatus = SubStringUtil.subStr(data, 42, 44);
                 switch (vehicleStatusDcStatus) {
@@ -282,22 +293,47 @@ public class DataParseServiceImpl implements DataParseService {
                         break;
                     default:
                 }
-                //TODO 档位处理
+
+                // 档位处理
                 GB32960TransmissionStatus transmissionStatus = new GB32960TransmissionStatus();
-                Integer vehicleStatusTransmissionStatus = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 44, 46));
-                switch (vehicleStatusTransmissionStatus) {
-                    default:
-                        transmissionStatus.setGear(vehicleStatusTransmissionStatus);
-                        break;
+                // 获取 vehicleStatusTransmissionStatus 的十六进制值并转换为二进制
+                String hexValue = SubStringUtil.subStr(data, 32, 34); // 假设 data 是你原始的数据
+                String binaryValue = HexUtils.hexStringToBinaryString(hexValue); // 转换为二进制
+                // 确保是 8 位二进制，如果不足 8 位，前补零
+                while (binaryValue.length() < 8) {
+                    binaryValue = "0" + binaryValue;
                 }
+
+                // 解析各个状态位(从左到右依次解析)
+                boolean hasDriveForce = binaryValue.charAt(2) == '1'; // Bit5 -> 有驱动力
+                boolean hasBrakingForce = binaryValue.charAt(3) == '1'; // Bit4 -> 有制动力
+                String gearPositionStr = "";
+
+                // 提取挡位的二进制部分（最后4位）
+                String gearPositionBinary = binaryValue.substring(4); // 获取挡位部分
+
+                // 根据挡位的二进制值进行映射
+                gearPositionStr = switch (gearPositionBinary) {
+                    case "0000" -> "空挡";
+                    case "0001" -> "1挡";
+                    case "0010" -> "2挡";
+                    case "0011" -> "3挡";
+                    case "0100" -> "4挡";
+                    case "0101" -> "5挡";
+                    case "0110" -> "6挡";
+                    case "1101" -> "倒挡";
+                    case "1110" -> "自动D挡";
+                    case "1111" -> "停车P挡";
+                    default -> "未知挡位";
+                };
+                transmissionStatus.setGear(gearPositionStr);
+                transmissionStatus.setHasDriverForce(hasDriveForce);
+                transmissionStatus.setHasBrakingForce(hasBrakingForce);
                 vehicleStatus.setTransmissionStatus(transmissionStatus);
+
                 //绝缘电阻
-                Integer vehicleStatusInsulationResistance = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 46, 50));
-                switch (vehicleStatusInsulationResistance) {
-                    default:
-                        vehicleStatus.setInsulationResistance(vehicleStatusInsulationResistance);
-                        break;
-                }
+                Integer vehicleStatusInsulationResistance = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 34, 38));
+                vehicleStatus.setInsulationResistance(vehicleStatusInsulationResistance);
                 //预留位
                 Integer yuliu = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 50, 54));
 
@@ -861,35 +897,34 @@ public class DataParseServiceImpl implements DataParseService {
 
     // 解析实时数据或补发数据
     private void parseRealTimeOrSupplementaryData(GB32960MessageData msg) {
-        String data = msg.getData();
         // 实时数据处理逻辑
         if ("02".equals(msg.getMsgCommand())) {
             // 处理实时数据
-            handleRealtimeDataParsing(data, msg);
+            handleRealtimeDataParsing(msg);
         }
 
         // 补发数据处理逻辑
         if ("03".equals(msg.getMsgCommand())) {
             // 处理补发数据
-            handleSupplementaryDataParsing(data, msg);
+            handleSupplementaryDataParsing(msg);
         }
     }
 
 
-    private void handleRealtimeDataParsing(String data, GB32960MessageData msg) {
-        log.info("处理实时数据: {}", data);
+    private void handleRealtimeDataParsing(GB32960MessageData msg) {
+        log.info("处理实时数据: {}", msg.getData());
 
         GB32960BaseDTO gb32960BaseDTO = new GB32960BaseDTO();
         gb32960BaseDTO.setCommand("TERMINAL_VEHICLE_UPLOAD_REALTIME");
         gb32960BaseDTO.setVin(msg.getUniqueIdentifier());
 
         // 解析采集时间
-        String year = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String year = LocalDateTime.now().format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN));
         String acquisitionTime = year + " " +
-                HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 6, 8)) + ":" +
-                HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 8, 10)) + ":" +
-                HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 10, 12));
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                HexUtils.hexStringToDecimal(SubStringUtil.subStr(msg.getData(), 6, 8)) + ":" +
+                HexUtils.hexStringToDecimal(SubStringUtil.subStr(msg.getData(), 8, 10)) + ":" +
+                HexUtils.hexStringToDecimal(SubStringUtil.subStr(msg.getData(), 10, 12));
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DatePattern.NORM_DATETIME_PATTERN);
         try {
             Date date = simpleDateFormat.parse(acquisitionTime);
             long ts = date.getTime();
@@ -898,59 +933,51 @@ public class DataParseServiceImpl implements DataParseService {
             log.error("时间解析错误: {}", acquisitionTime, e);
         }
 
+        msg.setData(SubStringUtil.subStr(msg.getData(), 12, msg.getData().length()));
+
         // 整车数据处理
-        if ("01".equals(SubStringUtil.subStr(data, 12, 14))) {
-            GB32960VehicleStatus vehicleStatus = new GB32960VehicleStatus();
-            vehicleStatus.setEngineStatus(parseEngineStatus(SubStringUtil.subStr(data, 14, 16)));
-            vehicleStatus.setChargingStatus(parseChargingStatus(SubStringUtil.subStr(data, 16, 18)));
-            vehicleStatus.setRunningModel(parseRunningModel(SubStringUtil.subStr(data, 18, 20)));
-            vehicleStatus.setSpeed(parseSpeed(SubStringUtil.subStr(data, 20, 24)));
-            vehicleStatus.setMileage(parseMileage(SubStringUtil.subStr(data, 24, 32)));
-            vehicleStatus.setVoltage(parseVoltage(SubStringUtil.subStr(data, 32, 36)));
-            vehicleStatus.setCurrent(parseCurrent(SubStringUtil.subStr(data, 36, 40)));
-            vehicleStatus.setSoc(parseSoc(SubStringUtil.subStr(data, 40, 42)));
-            vehicleStatus.setDcStatus(parseDcStatus(SubStringUtil.subStr(data, 42, 44)));
-            vehicleStatus.setTransmissionStatus(parseTransmissionStatus(SubStringUtil.subStr(data, 44, 46)));
-            vehicleStatus.setInsulationResistance(parseInsulationResistance(SubStringUtil.subStr(data, 46, 50)));
-            gb32960BaseDTO.setVehicleStatus(vehicleStatus);
+        if ("01".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+            parseVehicleStatus(gb32960BaseDTO, msg);
+        }
 
-            // 解析驱动电机数据
-            if ("02".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
-                gb32960BaseDTO.setDriveMotorStatus(parseDriveMotorStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
-            }
 
-            // 解析车辆位置数据
-            if ("05".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
-                gb32960BaseDTO.setLocationStatus(parseLocationStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
-            }
+        // 解析驱动电机数据
+        if ("02".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+            parseDriveMotorStatus(gb32960BaseDTO, msg);
+        }
 
-            // 解析极致数据
-            if ("06".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
-                gb32960BaseDTO.setExtremeStatus(parseExtremeStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
-            }
+        // 解析车辆位置数据
+        if ("05".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+            parseLocationStatus(gb32960BaseDTO, msg);
+        }
 
-            // 解析报警数据
-            if ("07".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
-                gb32960BaseDTO.setAlertStatus(parseAlertStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
-            }
+        // 解析极致数据
+        if ("06".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+            parseExtremeStatus(gb32960BaseDTO, msg);
+        }
 
-            // 解析可充电储能装置电压数据
-            if ("08".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
-                gb32960BaseDTO.setEnergyStorageVoltageStatus(parseEnergyStorageVoltageStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
-            }
+        // 解析报警数据
+        if ("07".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+            parseAlertStatus(gb32960BaseDTO, msg);
+        }
 
-            // 解析可充电储能装置温度数据
-            if ("09".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
-                gb32960BaseDTO.setEnergyStorageTemperatureStatus(parseEnergyStorageTemperatureStatus(SubStringUtil.subStr(msg.getData(), 2, -1)));
-            }
+        // 解析可充电储能装置电压数据
+        if ("08".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+            parseEnergyStorageVoltageStatus(gb32960BaseDTO, msg);
+        }
+
+        // 解析可充电储能装置温度数据
+        if ("09".equals(SubStringUtil.subStrStart(msg.getData(), 2))) {
+            parseEnergyStorageTemperatureStatus(gb32960BaseDTO, msg);
         }
 
         // TODO: 将 gb32960BaseDTO 推送到 Kafka 或其他 API
         processFinalData(gb32960BaseDTO);
     }
 
-    private void handleSupplementaryDataParsing(String data, GB32960MessageData msg) {
-        log.info("处理补发数据: {}", data);
+
+    private void handleSupplementaryDataParsing(GB32960MessageData msg) {
+        log.info("处理补发数据: {}", msg.getData());
 
         GB32960BaseDTO gb32960BaseDTO = new GB32960BaseDTO();
         gb32960BaseDTO.setCommand("SUPPLEMENTARY_DATA");
@@ -967,135 +994,198 @@ public class DataParseServiceImpl implements DataParseService {
         processFinalData(gb32960BaseDTO);
     }
 
-    private String parseEngineStatus(String status) {
-        switch (status) {
-            case "01":
-                return "STARTED";
-            case "02":
-                return "STOPPED";
-            case "03":
-                return "OTHER";
-            case "FE":
-                return "ERROR";
-            case "FF":
-                return "INVALID";
-            default:
-                return "UNKNOWN";
-        }
-    }
 
-    private String parseChargingStatus(String status) {
-        switch (status) {
+    /**
+     * 7.2.3.1 整车数据
+     * 整车数据格式和定义见表9。
+     *
+     * @param gb32960BaseDTO
+     * @param msg
+     */
+    private void parseVehicleStatus(GB32960BaseDTO gb32960BaseDTO, GB32960MessageData msg) {
+        String data = msg.getData();
+        //整车数据处理
+        GB32960VehicleStatus vehicleStatus = new GB32960VehicleStatus();
+        //车辆状态
+        String vehicleStatusEngineStatus = SubStringUtil.subStr(data, 2, 4);
+        switch (vehicleStatusEngineStatus) {
             case "01":
-                return "CHARGING_STOPPED";
+                vehicleStatus.setEngineStatus("STARTED");
+                break;
             case "02":
-                return "CHARGING_DRIVING";
+                vehicleStatus.setEngineStatus("STOPPED");
+                break;
             case "03":
-                return "NO_CHARGING";
+                vehicleStatus.setEngineStatus("OTHER");
+                break;
+            case "FE":
+                vehicleStatus.setEngineStatus("ERROR");
+                break;
+            case "FF":
+                vehicleStatus.setEngineStatus("INVALID");
+                break;
+            default:
+        }
+        //充电状态
+        String vehicleStatusChargingStatus = SubStringUtil.subStr(data, 4, 6);
+        switch (vehicleStatusChargingStatus) {
+            case "01":
+                vehicleStatus.setChargingStatus("CHARGING_STOPPED");
+                break;
+            case "02":
+                vehicleStatus.setChargingStatus("CHARGING_DRIVING");
+                break;
+            case "03":
+                vehicleStatus.setChargingStatus("NO_CHARGING");
+                break;
             case "04":
-                return "NO_CHARGING";
+                vehicleStatus.setChargingStatus("NO_CHARGING");
+                break;
             case "FE":
-                return "ERROR";
+                vehicleStatus.setChargingStatus("ERROR");
+                break;
             case "FF":
-                return "INVALID";
+                vehicleStatus.setChargingStatus("INVALID");
+                break;
             default:
-                return "UNKNOWN";
         }
-    }
-
-    private String parseRunningModel(String model) {
-        switch (model) {
+        //运行模式
+        String vehicleStatusRunningModel = SubStringUtil.subStr(data, 6, 8);
+        switch (vehicleStatusRunningModel) {
             case "01":
-                return "EV";
+                vehicleStatus.setRunningModel("EV");
+                break;
             case "02":
-                return "PHEV";
+                vehicleStatus.setRunningModel("PHEV");
+                break;
             case "03":
-                return "FV";
+                vehicleStatus.setRunningModel("FV");
+                break;
             case "FE":
-                return "ERROR";
+                vehicleStatus.setRunningModel("ERROR");
+                break;
             case "FF":
-                return "INVALID";
+                vehicleStatus.setRunningModel("INVALID");
+                break;
             default:
-                return "UNKNOWN";
         }
-    }
-
-    private Double parseSpeed(String speedHex) {
-        Integer speed = HexUtils.hexStringToDecimal(speedHex);
-        return new BigDecimal(speed).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
-    }
-
-    private Double parseMileage(String mileageHex) {
-        Integer mileage = HexUtils.hexStringToDecimal(mileageHex);
-        return new BigDecimal(mileage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
-    }
-
-    private Double parseVoltage(String voltageHex) {
-        Integer voltage = HexUtils.hexStringToDecimal(voltageHex);
-        return new BigDecimal(voltage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
-    }
-
-    private Double parseCurrent(String currentHex) {
-        Integer current = HexUtils.hexStringToDecimal(currentHex);
-        return new BigDecimal(current).subtract(new BigDecimal(1000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
-    }
-
-    private Integer parseSoc(String socHex) {
-        return HexUtils.hexStringToDecimal(socHex);
-    }
-
-    private String parseDcStatus(String dcStatus) {
-        switch (dcStatus) {
+        //车速
+        Integer vehicleStatusSpeed = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 8, 12));
+        Double speed = new BigDecimal(vehicleStatusSpeed).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+        vehicleStatus.setSpeed(speed);
+        //累计里程
+        Integer vehicleStatusMileage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 12, 20));
+        Double mileage = new BigDecimal(vehicleStatusMileage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+        vehicleStatus.setMileage(mileage);
+        //总电压
+        Integer vehicleStatusVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 20, 24));
+        Double voltage = new BigDecimal(vehicleStatusVoltage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+        vehicleStatus.setVoltage(voltage);
+        //总电流
+        Integer vehicleStatusCurrent = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 24, 28).trim());
+        Double current = new BigDecimal(vehicleStatusCurrent).subtract(new BigDecimal(1000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+        vehicleStatus.setCurrent(current);
+        //SOC
+        Integer vehicleStatusSoc = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 28, 30));
+        vehicleStatus.setSoc(vehicleStatusSoc);
+        //DC-DC状态
+        String vehicleStatusDcStatus = SubStringUtil.subStr(data, 30, 32);
+        switch (vehicleStatusDcStatus) {
             case "01":
-                return "NORMAL";
+                vehicleStatus.setDcStatus("NORMAL");
+                break;
             case "02":
-                return "OFF";
+                vehicleStatus.setDcStatus("OFF");
+                break;
             case "FE":
-                return "ERROR";
+                vehicleStatus.setDcStatus("ERROR");
+                break;
             case "FF":
-                return "INVALID";
+                vehicleStatus.setDcStatus("INVALID");
+                break;
             default:
-                return "UNKNOWN";
         }
+
+        // 档位处理
+        GB32960TransmissionStatus transmissionStatus = new GB32960TransmissionStatus();
+        // 获取 vehicleStatusTransmissionStatus 的十六进制值并转换为二进制
+        String hexValue = SubStringUtil.subStr(data, 32, 34); // 假设 data 是你原始的数据
+        String binaryValue = HexUtils.hexStringToBinaryString(hexValue); // 转换为二进制
+        // 确保是 8 位二进制，如果不足 8 位，前补零
+        while (binaryValue.length() < 8) {
+            binaryValue = "0" + binaryValue;
+        }
+
+        // 解析各个状态位(从左到右依次解析)
+        boolean hasDriveForce = binaryValue.charAt(2) == '1'; // Bit5 -> 有驱动力
+        boolean hasBrakingForce = binaryValue.charAt(3) == '1'; // Bit4 -> 有制动力
+        String gearPositionStr = "";
+
+        // 提取挡位的二进制部分（最后4位）
+        String gearPositionBinary = binaryValue.substring(4); // 获取挡位部分
+
+        // 根据挡位的二进制值进行映射
+        gearPositionStr = switch (gearPositionBinary) {
+            case "0000" -> "空挡";
+            case "0001" -> "1挡";
+            case "0010" -> "2挡";
+            case "0011" -> "3挡";
+            case "0100" -> "4挡";
+            case "0101" -> "5挡";
+            case "0110" -> "6挡";
+            case "1101" -> "倒挡";
+            case "1110" -> "自动D挡";
+            case "1111" -> "停车P挡";
+            default -> "未知挡位";
+        };
+        transmissionStatus.setGear(gearPositionStr);
+        transmissionStatus.setHasDriverForce(hasDriveForce);
+        transmissionStatus.setHasBrakingForce(hasBrakingForce);
+        vehicleStatus.setTransmissionStatus(transmissionStatus);
+        //绝缘电阻
+        Integer vehicleStatusInsulationResistance = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 34, 38));
+        vehicleStatus.setInsulationResistance(vehicleStatusInsulationResistance);
+        //预留位
+        Integer yuliu = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 38, 42));
+        gb32960BaseDTO.setVehicleStatus(vehicleStatus);
+        // 42 之后的数据为可充电储能装置电压数据
+        msg.setData(SubStringUtil.subStr(data, 42, data.length()));
     }
 
-    private GB32960TransmissionStatus parseTransmissionStatus(String transmissionStatusHex) {
-        GB32960TransmissionStatus status = new GB32960TransmissionStatus();
-        Integer gear = HexUtils.hexStringToDecimal(transmissionStatusHex);
-        status.setGear(gear);
-        return status;
-    }
 
-    private Integer parseInsulationResistance(String resistanceHex) {
-        return HexUtils.hexStringToDecimal(resistanceHex);
-    }
+    /**
+     * 7.2.3.2 驱动电机数据
+     * 驱动电机数据格式和定义见表10
+     *
+     * @param gb32960BaseDTO
+     * @param msg
+     */
+    private void parseDriveMotorStatus(GB32960BaseDTO gb32960BaseDTO, GB32960MessageData msg) {
+        String data = msg.getData();
+        // 驱动电机个数
+        Integer driveMotorStatusDriveMotorCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 2, 4));
 
-    private GB32960DriveMotorStatus parseDriveMotorStatus(String driveMotorData) {
-        log.info("解析驱动电机数据: {}", driveMotorData);
-
+        // 设置驱动电机个数
         GB32960DriveMotorStatus driveMotorStatus = new GB32960DriveMotorStatus();
+        driveMotorStatus.setDriveMotorCount(driveMotorStatusDriveMotorCount);
 
-        // 驱动机个数
-        Integer driveMotorCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorData, 0, 2));
-        driveMotorStatus.setDriveMotorCount(driveMotorCount);
+        // 每个驱动电机总成信息长度
+        String driveMotorsLength = SubStringUtil.subStr(data, 4, 28 * driveMotorStatusDriveMotorCount);
 
         List<GB32960DriveMotors> driveMotorsList = new ArrayList<>();
 
-        int offset = 2; // 初始化偏移量
-        for (int i = 0; i < driveMotorCount; i++) {
+        // 解析每个驱动电机的信息 (TODO 多个电机需多次验证, 2025-01-23)
+        for (int i = 0; i < driveMotorStatusDriveMotorCount; i++) {
             GB32960DriveMotors driveMotors = new GB32960DriveMotors();
-
-            // 每个驱动电机总成信息长度
-            String driveMotorInfo = SubStringUtil.subStr(driveMotorData, offset, 28);
-            offset += 28;
+            String motorData = SubStringUtil.subStr(driveMotorsLength, 28 * i, driveMotorsLength.length());
 
             // 驱动电机序号
-            Integer driveMotorSn = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 0, 2));
-            driveMotors.setSn(driveMotorSn);
+            Integer driveMotorsSn = HexUtils.hexStringToDecimal(SubStringUtil.subStrStart(motorData, 2));
+            driveMotors.setSn(driveMotorsSn);
 
-            // 驱动电机功率状态
-            String driveMotorPower = SubStringUtil.subStr(driveMotorInfo, 2, 4);
-            switch (driveMotorPower) {
+            // 驱动电机状态
+            String driveMotorsDriveMotorPower = SubStringUtil.subStr(motorData, 2, 4);
+            switch (driveMotorsDriveMotorPower) {
                 case "01":
                     driveMotors.setDriveMotorPower("CONSUMING_POWER");
                     break;
@@ -1116,72 +1206,107 @@ public class DataParseServiceImpl implements DataParseService {
                     break;
                 default:
                     driveMotors.setDriveMotorPower("UNKNOWN");
-                    break;
             }
 
             // 驱动电机控制器温度
-            Integer controllerTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 4, 6));
-            driveMotors.setControllerTemperature(controllerTemperature - 40);
+            Integer driveMotorsControllerTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(motorData, 4, 6));
+            driveMotors.setControllerTemperature(driveMotorsControllerTemperature - 40);
 
             // 驱动电机转速
-            Integer driveMotorSpeed = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 6, 10));
-            driveMotors.setDriveMotorSpeed(driveMotorSpeed - 20000);
+            Integer driveMotorsDriveMotorSpeed = HexUtils.hexStringToDecimal(SubStringUtil.subStr(motorData, 6, 10));
+            driveMotors.setDriveMotorSpeed(driveMotorsDriveMotorSpeed - 20000);
 
             // 驱动电机转矩
-            Integer driveMotorTorque = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 10, 14));
-            Double motorTorque = new BigDecimal(driveMotorTorque).subtract(new BigDecimal(20000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
-            driveMotors.setDriveMotorTorque(motorTorque);
+            Integer driveMotorsDriveMotorTorque = HexUtils.hexStringToDecimal(SubStringUtil.subStr(motorData, 10, 14));
+            Double driveMotorTorque = new BigDecimal(driveMotorsDriveMotorTorque).subtract(new BigDecimal(20000))
+                    .divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+            driveMotors.setDriveMotorTorque(driveMotorTorque);
 
             // 驱动电机温度
-            Integer driveMotorTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 14, 16));
-            driveMotors.setDriveMotorTemperature(driveMotorTemperature - 40);
+            Integer driveMotorsDriveMotorTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(motorData, 14, 16));
+            driveMotors.setDriveMotorTemperature(driveMotorsDriveMotorTemperature - 40);
 
             // 电机控制器输入电压
-            Integer controllerInputVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 16, 20));
-            Double inputVoltage = new BigDecimal(controllerInputVoltage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
-            driveMotors.setControllerInputVoltage(inputVoltage);
+            Integer driveMotorsControllerInputVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(motorData, 16, 20));
+            Double controllerInputVoltage = new BigDecimal(driveMotorsControllerInputVoltage)
+                    .divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+            driveMotors.setControllerInputVoltage(controllerInputVoltage);
 
             // 电机控制器直流母线电流
-            Integer dcBusCurrent = HexUtils.hexStringToDecimal(SubStringUtil.subStr(driveMotorInfo, 20, 24));
-            Double busCurrent = new BigDecimal(dcBusCurrent).subtract(new BigDecimal(1000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
-            driveMotors.setDcBusCurrentOfController(busCurrent);
+            Integer driveMotorsDcBusCurrentOfController = HexUtils.hexStringToDecimal(SubStringUtil.subStr(motorData, 20, 24));
+            Double dcBusCurrentOfController = new BigDecimal(driveMotorsDcBusCurrentOfController)
+                    .subtract(new BigDecimal(1000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue();
+            driveMotors.setDcBusCurrentOfController(dcBusCurrentOfController);
 
+            // 将每个驱动电机添加到列表
             driveMotorsList.add(driveMotors);
         }
 
+        // 设置驱动电机信息列表
         driveMotorStatus.setDriveMotors(driveMotorsList);
-        return driveMotorStatus;
+        gb32960BaseDTO.setDriveMotorStatus(driveMotorStatus);
+
+        // 更新数据
+        msg.setData(SubStringUtil.subStr(data, driveMotorsLength.length() + 4, data.length()));
     }
 
-    private GB32960LocationStatus parseLocationStatus(String locationData) {
-        log.info("解析位置数据: {}", locationData);
 
+    /**
+     * 7.2.3.5 车辆位置数据
+     * 车辆位置数据格式和定义见表14。
+     *
+     * @param gb32960BaseDTO
+     * @param msg
+     */
+    private void parseLocationStatus(GB32960BaseDTO gb32960BaseDTO, GB32960MessageData msg) {
+        String data = msg.getData();
         GB32960LocationStatus locationStatus = new GB32960LocationStatus();
 
-        // 定位状态
+        // 定位状态（使用二进制位解析）
+        String locateStatusHex = SubStringUtil.subStr(data, 2, 4);  // 获取定位状态字节
+        String locateStatusBinary = HexUtils.hexStringToBinaryString(locateStatusHex); // 转换为二进制字符串
+
+        // 确保是8位二进制，如果不足8位，前补零
+        while (locateStatusBinary.length() < 8) {
+            locateStatusBinary = "0" + locateStatusBinary;
+        }
+
+        // 解析定位状态（从左到右解析每一位）
+        String validation = (locateStatusBinary.charAt(0) == '0') ? "VALID" : "INVALID"; // 第0位：有效/无效定位
+        String latitudeType = (locateStatusBinary.charAt(1) == '0') ? "NORTH" : "SOUTH";  // 第1位：纬度类型
+        String longitudeType = (locateStatusBinary.charAt(2) == '0') ? "EAST" : "WEST";  // 第2位：经度类型
+
+        // 创建定位状态对象
         GB32960LocateStatus locateStatus = new GB32960LocateStatus();
-        locateStatus.setValidation("VALID");
-
-        Integer latitudeType = HexUtils.hexStringToDecimal(SubStringUtil.subStr(locationData, 0, 1));
-        locateStatus.setLatitudeType(latitudeType == 0 ? "NORTH" : "SOUTH");
-
-        Integer longitudeType = HexUtils.hexStringToDecimal(SubStringUtil.subStr(locationData, 1, 2));
-        locateStatus.setLongitudeType(longitudeType == 0 ? "EAST" : "WEST");
-
+        locateStatus.setValidation(validation);
+        locateStatus.setLatitudeType(latitudeType);
+        locateStatus.setLongitudeType(longitudeType);
         locationStatus.setLocateStatus(locateStatus);
 
-        // 精度
-        Integer longitude = HexUtils.hexStringToDecimal(SubStringUtil.subStr(locationData, 2, 10));
-        locationStatus.setLongitude(new BigDecimal(longitude).movePointLeft(6).doubleValue());
+        // 解析经度（4字节，乘以10⁶）
+        Integer longitude = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 4, 12));  // 经度数据
+        locationStatus.setLongitude(new BigDecimal(longitude).movePointLeft(6).doubleValue());  // 转换为实际经度
 
-        Integer latitude = HexUtils.hexStringToDecimal(SubStringUtil.subStr(locationData, 10, 18));
-        locationStatus.setLatitude(new BigDecimal(latitude).movePointLeft(6).doubleValue());
+        // 解析纬度（4字节，乘以10⁵）
+        Integer latitude = HexUtils.hexStringToDecimal(SubStringUtil.subStr(data, 12, 20));  // 纬度数据
+        locationStatus.setLatitude(new BigDecimal(latitude).movePointLeft(6).doubleValue());  // 转换为实际纬度
 
-        return locationStatus;
+        // 设置到 DTO 中
+        gb32960BaseDTO.setLocationStatus(locationStatus);
+
+        // 更新消息数据，去除已经解析过的数据
+        msg.setData(SubStringUtil.subStr(data, 20, data.length()));
     }
 
-    private GB32960ExtremeStatus parseExtremeStatus(String extremeData) {
-        log.info("解析极致数据: {}", extremeData);
+    /**
+     * 7.2.3.6 极值数据
+     * 极值数据格式和定义见表16。
+     *
+     * @param gb32960BaseDTO
+     * @param msg
+     */
+    private void parseExtremeStatus(GB32960BaseDTO gb32960BaseDTO, GB32960MessageData msg) {
+        String extremeData = SubStringUtil.subStr(msg.getData(), 2, msg.getData().length());
 
         GB32960ExtremeStatus extremeStatus = new GB32960ExtremeStatus();
 
@@ -1233,11 +1358,22 @@ public class DataParseServiceImpl implements DataParseService {
         Integer minTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(extremeData, 26, 28));
         extremeStatus.setMinTemperature(minTemperature - 40);
 
-        return extremeStatus;
+        gb32960BaseDTO.setExtremeStatus(extremeStatus);
+
+        // 更新消息数据，去除已经解析过的数据
+        msg.setData(SubStringUtil.subStr(extremeData, 28, extremeData.length()));
     }
 
-    private GB32960AlertStatus parseAlertStatus(String alertData) {
-        log.info("解析报警数据: {}", alertData);
+
+    /**
+     * 7.2.3.7 报警数据
+     * 报警数据格式和定义见表17。
+     *
+     * @param gb32960BaseDTO
+     * @param msg
+     */
+    private void parseAlertStatus(GB32960BaseDTO gb32960BaseDTO, GB32960MessageData msg) {
+        String alertData = SubStringUtil.subStr(msg.getData(), 2, msg.getData().length());
 
         GB32960AlertStatus alertStatus = new GB32960AlertStatus();
 
@@ -1275,95 +1411,122 @@ public class DataParseServiceImpl implements DataParseService {
         Integer energyStorageAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 10, 12));
         alertStatus.setEnergyStorageAlertCount(energyStorageAlertCount);
 
+        int currentIndex = 12;
         if (energyStorageAlertCount > 0) {
             List<Integer> energyStorageAlertList = new ArrayList<>();
             for (int i = 0; i < energyStorageAlertCount; i++) {
-                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 12 + 4 * i, 12 + 4 * i + 4));
+                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, currentIndex, currentIndex + 4));
                 energyStorageAlertList.add(alertCode);
+                currentIndex += 4; // 每个报警占 4 字节
             }
             alertStatus.setEnergyStorageAlertList(energyStorageAlertList);
         }
 
         // 驱动电机故障总数
-        Integer driveMotorAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 12 + 4 * energyStorageAlertCount, 14 + 4 * energyStorageAlertCount));
+        Integer driveMotorAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, currentIndex, currentIndex + 2));
         alertStatus.setDriveMotorAlertCount(driveMotorAlertCount);
+        currentIndex += 2;
 
         if (driveMotorAlertCount > 0) {
             List<Integer> driveMotorAlertList = new ArrayList<>();
             for (int i = 0; i < driveMotorAlertCount; i++) {
-                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 14 + 4 * energyStorageAlertCount + 4 * i, 14 + 4 * energyStorageAlertCount + 4 * i + 4));
+                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, currentIndex, currentIndex + 4));
                 driveMotorAlertList.add(alertCode);
+                currentIndex += 4; // 每个报警占 4 字节
             }
             alertStatus.setDriveMotorAlertList(driveMotorAlertList);
         }
 
         // 发动机故障总数
-        Integer engineAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 14 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount, 16 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount));
+        Integer engineAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, currentIndex, currentIndex + 2));
         alertStatus.setEngineAlertCount(engineAlertCount);
+        currentIndex += 2;
 
         if (engineAlertCount > 0) {
             List<Integer> engineAlertList = new ArrayList<>();
             for (int i = 0; i < engineAlertCount; i++) {
-                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 16 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * i, 16 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * i + 4));
+                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, currentIndex, currentIndex + 4));
                 engineAlertList.add(alertCode);
+                currentIndex += 4; // 每个报警占 4 字节
             }
             alertStatus.setEngineAlertList(engineAlertList);
         }
 
         // 其他故障总数
-        Integer otherAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 16 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * engineAlertCount, 18 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * engineAlertCount));
+        Integer otherAlertCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, currentIndex, currentIndex + 2));
         alertStatus.setOtherAlertCount(otherAlertCount);
+        currentIndex += 2;
 
         if (otherAlertCount > 0) {
             List<Integer> otherAlertList = new ArrayList<>();
             for (int i = 0; i < otherAlertCount; i++) {
-                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, 18 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * engineAlertCount + 4 * i, 18 + 4 * energyStorageAlertCount + 4 * driveMotorAlertCount + 4 * engineAlertCount + 4 * i + 4));
+                Integer alertCode = HexUtils.hexStringToDecimal(SubStringUtil.subStr(alertData, currentIndex, currentIndex + 4));
                 otherAlertList.add(alertCode);
+                currentIndex += 4; // 每个报警占 4 字节
             }
             alertStatus.setOtherAlertList(otherAlertList);
         }
 
-        return alertStatus;
+        gb32960BaseDTO.setAlertStatus(alertStatus);
+
+        // 更新消息数据，去除已经解析过的数据
+        msg.setData(SubStringUtil.subStr(alertData, currentIndex, alertData.length()));
     }
 
-    private GB32960EnergyStorageVoltageStatus parseEnergyStorageVoltageStatus(String voltageData) {
-        log.info("解析电压数据: {}", voltageData);
+
+    /**
+     * 可充电储能装置电压数据
+     *
+     * @param gb32960BaseDTO
+     * @param msg
+     */
+    private void parseEnergyStorageVoltageStatus(GB32960BaseDTO gb32960BaseDTO, GB32960MessageData msg) {
+        String voltageData = SubStringUtil.subStr(msg.getData(), 2, msg.getData().length());
 
         GB32960EnergyStorageVoltageStatus voltageStatus = new GB32960EnergyStorageVoltageStatus();
 
+        // 获取子系统个数
         Integer subSystemCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, 0, 2));
         voltageStatus.setSubSystemOfEnergyStorageCount(subSystemCount);
 
         List<GB32960EnergyStorageVoltages> voltagesList = new ArrayList<>();
         int offset = 2;
 
+        // 解析每个子系统的数据
         for (int i = 0; i < subSystemCount; i++) {
             GB32960EnergyStorageVoltages voltages = new GB32960EnergyStorageVoltages();
 
+            // 子系统索引
             Integer subSystemIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 2));
             voltages.setEnergyStorageSubSystemIndex(subSystemIndex);
             offset += 2;
 
+            // 储能电压
             Integer energyStorageVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
             voltages.setEnergyStorageVoltage(new BigDecimal(energyStorageVoltage).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue());
             offset += 4;
 
+            // 储能电流
             Integer energyStorageCurrent = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
             voltages.setEnergyStorageCurrent(new BigDecimal(energyStorageCurrent).subtract(new BigDecimal(1000)).divide(new BigDecimal("10")).setScale(1, BigDecimal.ROUND_UP).doubleValue());
             offset += 4;
 
+            // 电池数量
             Integer cellCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
             voltages.setCellCount(cellCount);
             offset += 4;
 
+            // 电池框起始索引
             Integer frameCellStartIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
             voltages.setFrameCellStartIndex(frameCellStartIndex);
             offset += 4;
 
+            // 电池框电池数量
             Integer frameCellCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 2));
             voltages.setFrameCellCount(frameCellCount);
             offset += 2;
 
+            // 解析每个电池的电压
             List<Double> cellVoltages = new ArrayList<>();
             for (int j = 0; j < frameCellCount; j++) {
                 Integer cellVoltage = HexUtils.hexStringToDecimal(SubStringUtil.subStr(voltageData, offset, offset + 4));
@@ -1372,48 +1535,72 @@ public class DataParseServiceImpl implements DataParseService {
             }
             voltages.setCellVoltages(cellVoltages);
 
+            // 将解析的数据添加到列表
             voltagesList.add(voltages);
         }
 
+        // 设置能量存储电压数据
         voltageStatus.setEnergyStorageVoltages(voltagesList);
-        return voltageStatus;
+
+        gb32960BaseDTO.setEnergyStorageVoltageStatus(voltageStatus);
+
+        // 更新消息数据，去除已经解析过的数据
+        msg.setData(SubStringUtil.subStr(voltageData, offset, voltageData.length()));
     }
 
-    private GB32960EnergyStorageTemperatureStatus parseEnergyStorageTemperatureStatus(String temperatureData) {
-        log.info("解析温度数据: {}", temperatureData);
+
+    /**
+     * 可充电储能装置温度数据
+     *
+     * @param gb32960BaseDTO
+     * @param msg
+     */
+    private void parseEnergyStorageTemperatureStatus(GB32960BaseDTO gb32960BaseDTO, GB32960MessageData msg) {
+        String temperatureData = SubStringUtil.subStr(msg.getData(), 2, msg.getData().length());
 
         GB32960EnergyStorageTemperatureStatus temperatureStatus = new GB32960EnergyStorageTemperatureStatus();
 
+        // 获取子系统个数
         Integer subSystemCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(temperatureData, 0, 2));
         temperatureStatus.setSubEnergyStorageSystemCount(subSystemCount);
 
         List<GB32960EnergyStorageTemperatures> temperaturesList = new ArrayList<>();
         int offset = 2;
 
+        // 解析每个子系统的数据
         for (int i = 0; i < subSystemCount; i++) {
             GB32960EnergyStorageTemperatures temperatures = new GB32960EnergyStorageTemperatures();
 
+            // 子系统索引
             Integer subSystemIndex = HexUtils.hexStringToDecimal(SubStringUtil.subStr(temperatureData, offset, offset + 2));
             temperatures.setEnergyStorageSubSystemIndex1(subSystemIndex);
             offset += 2;
 
+            // 探针数量
             Integer probeCount = HexUtils.hexStringToDecimal(SubStringUtil.subStr(temperatureData, offset, offset + 4));
             temperatures.setProbeCount(probeCount);
             offset += 4;
 
             List<Integer> cellTemperatures = new ArrayList<>();
             for (int j = 0; j < probeCount; j++) {
+                // 电池温度，减去40℃来转换为实际温度
                 Integer cellTemperature = HexUtils.hexStringToDecimal(SubStringUtil.subStr(temperatureData, offset, offset + 2)) - 40;
                 cellTemperatures.add(cellTemperature);
                 offset += 2;
             }
             temperatures.setCellTemperatures(cellTemperatures);
 
+            // 将解析的数据添加到列表
             temperaturesList.add(temperatures);
         }
 
+        // 设置能量存储温度数据
         temperatureStatus.setEnergyStorageTemperatures(temperaturesList);
-        return temperatureStatus;
+
+        gb32960BaseDTO.setEnergyStorageTemperatureStatus(temperatureStatus);
+
+        // 更新消息数据，去除已经解析过的数据
+        msg.setData(SubStringUtil.subStr(temperatureData, offset, temperatureData.length()));
     }
 
 
@@ -1422,8 +1609,22 @@ public class DataParseServiceImpl implements DataParseService {
         //TODO 将数据推送到 Kafka 或其他 API
         String jsonData = JSONUtil.toJsonStr(data);
         // 示例：推送到 Kafka
+
+
         // kafkaTemplate.send("topic_name", jsonData);
         log.info("数据推送到 Kafka 或 API: {}", jsonData);
+    }
+
+    /**
+     * 发布设备消息到 MQTT
+     */
+    private void sendDeviceDatas(GB32960BaseDTO data) {
+        String deviceId = data.getVin();
+        String topic = Boot.mqttClientTopic.getDefaultValue();
+        String payload = "";
+
+        MqttEventPublisher mqttEventPublisher = SpringUtils.getBean(MqttEventPublisher.class);
+        mqttEventPublisher.publishMqttMessageEvent(topic, payload.getBytes(), MqttQoS.AT_LEAST_ONCE, false);
     }
 
 
