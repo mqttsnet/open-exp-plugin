@@ -1,11 +1,13 @@
 package com.mqttsnet.thinglinks.open.exp.example.a;
 
+import cn.hutool.core.net.NetUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -22,20 +24,20 @@ public class MyComponent {
     MyUserServicePluginImpl myUserServicePlugin;
 
     public MyComponent() {
-        System.out.println("11111");
+        System.out.println("example-plugin-demo plugin is starting for MyComponent...");
     }
 
     @PostConstruct
     public void init() {
         System.out.println("--->>>>");
-        log.info("start plugin...");
+        log.info("start example-plugin-demo plugin...");
 
         scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                System.out.println("hello");
+                log.info("example-plugin-demo Heartbeat sent successfully at at {} with IP: {}", LocalDateTime.now(), NetUtil.getLocalhostStr());
             }
-        }, 1, 1, TimeUnit.SECONDS);
+        }, 30, 30, TimeUnit.SECONDS);
     }
 
     @PreDestroy

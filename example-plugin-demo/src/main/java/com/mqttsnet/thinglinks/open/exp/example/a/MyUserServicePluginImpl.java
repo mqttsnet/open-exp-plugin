@@ -14,7 +14,7 @@ public class MyUserServicePluginImpl implements UserService {
 
     @jakarta.annotation.PostConstruct
     public void init() {
-        System.out.println("112222");
+        System.out.println("example-plugin-demo plugin is starting for MyUserServicePluginImpl...");
     }
 
     @Override

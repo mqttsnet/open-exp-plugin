@@ -1,12 +1,22 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.dispatcher;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import cn.hutool.core.util.StrUtil;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.Boot;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960MessageData;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.service.DataParseService;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.service.impl.DataParseServiceImpl;
+import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.mqtt.event.publisher.MqttEventPublisher;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.utils.SpringUtils;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelId;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +43,50 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960MessageData> {
+
+    // 用于存储每个设备的 TCP ChannelId 和 MQTT 客户端的映射关系
+    private static final Map<ChannelId, String> CHANNEL_TO_DEVICE_ID_MAP = new HashMap<>();
+    private static final ChannelGroup CHANNEL_GROUP = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        // 客户端连接成功
+        log.info("客户端连接成功: {}", ctx.channel().remoteAddress());
+        CHANNEL_GROUP.add(ctx.channel());  // 将连接的 TCP 通道添加到 ChannelGroup
+        // 将设备id和通道id进行映射（假设使用通道的ID作为设备ID）
+        CHANNEL_TO_DEVICE_ID_MAP.put(ctx.channel().id(), ctx.channel().id().asLongText());
+
+        // 发布设备上线的 MQTT 消息
+        sendDeviceStatusUpdate(ctx.channel().id(), "ONLINE");
+
+        super.channelActive(ctx);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        // 客户端断开连接
+        log.info("客户端断开连接: {}", ctx.channel().remoteAddress());
+        CHANNEL_GROUP.remove(ctx.channel());  // 从 ChannelGroup 中移除断开连接的 TCP 通道
+        // 发布设备离线的 MQTT 消息
+        sendDeviceStatusUpdate(ctx.channel().id(), "OFFLINE");
+        CHANNEL_TO_DEVICE_ID_MAP.remove(ctx.channel().id());  // 清除映射关系
+
+        super.channelInactive(ctx);
+    }
+
+
+    /**
+     * 发布设备状态更新消息到 MQTT
+     */
+    private void sendDeviceStatusUpdate(ChannelId channelId, String status) {
+        String deviceId = CHANNEL_TO_DEVICE_ID_MAP.get(channelId);
+        String topic = Boot.mqttClientTopic.getDefaultValue();
+        String payload = String.format("{\"dataBody\":{\"deviceStatuses\":[{\"deviceId\":\"%s\",\"status\":\"%s\"}]}}", deviceId, status);
+
+        MqttEventPublisher mqttEventPublisher = SpringUtils.getBean(MqttEventPublisher.class);
+        mqttEventPublisher.publishMqttMessageEvent(topic, payload.getBytes(), MqttQoS.AT_LEAST_ONCE, false);
+    }
+
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, GB32960MessageData msg) throws Exception {
@@ -76,4 +130,6 @@ public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960Messag
             ctx.writeAndFlush(response);
         }
     }
+
+
 }
