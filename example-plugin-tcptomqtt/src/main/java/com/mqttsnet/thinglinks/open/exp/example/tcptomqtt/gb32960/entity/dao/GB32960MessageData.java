@@ -14,7 +14,7 @@ import lombok.Data;
  * @Version: 1.0
  */
 @Data
-public class GB32960MessageData {
+public class GB32960MessageData implements Cloneable {
     /**
      * 起始符
      */
@@ -58,4 +58,15 @@ public class GB32960MessageData {
      * 校验码
      */
     private String checkCode;
+
+
+    @Override
+    public GB32960MessageData clone() {
+        try {
+            // 调用 Object 类的 clone 方法进行浅拷贝
+            return (GB32960MessageData) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Clone not supported", e);
+        }
+    }
 }

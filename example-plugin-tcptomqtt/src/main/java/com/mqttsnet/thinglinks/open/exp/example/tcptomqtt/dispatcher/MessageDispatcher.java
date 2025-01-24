@@ -80,7 +80,7 @@ public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960Messag
      */
     private void sendDeviceStatusUpdate(ChannelId channelId, String status) {
         String deviceId = CHANNEL_TO_DEVICE_ID_MAP.get(channelId);
-        String topic = Boot.mqttClientTopic.getDefaultValue();
+        String topic = Boot.mqttClientCommandTopic.getDefaultValue();
         String payload = String.format("{\"dataBody\":{\"deviceStatuses\":[{\"deviceId\":\"%s\",\"status\":\"%s\"}]}}", deviceId, status);
 
         MqttEventPublisher mqttEventPublisher = SpringUtils.getBean(MqttEventPublisher.class);

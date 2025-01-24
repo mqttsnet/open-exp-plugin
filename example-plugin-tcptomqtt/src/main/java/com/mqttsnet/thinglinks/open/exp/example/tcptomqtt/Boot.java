@@ -5,6 +5,7 @@ import com.mqttsnet.thinglinks.open.exp.plugin.depend.AbstractBoot;
 
 /**
  * 插件核心配置文件
+ *
  * @author mqttsnet
  */
 public class Boot extends AbstractBoot {
@@ -56,14 +57,14 @@ public class Boot extends AbstractBoot {
      * 客户端ID
      * 软网关
      */
-    public static ConfigSupport mqttClientClientId = new ConfigSupport("mqtt.client.clientId", "0412011231715328@483305815051076198");
+    public static ConfigSupport mqttClientClientId = new ConfigSupport("mqtt.client.clientId", "3653578716192768@483305815051076198");
 
 
     /**
      * 设备唯一标识
      * 软网关
      */
-    public static ConfigSupport mqttClientDeviceIdentification = new ConfigSupport("mqtt.client.deviceIdentification", "0412011231715329");
+    public static ConfigSupport mqttClientDeviceIdentification = new ConfigSupport("mqtt.client.deviceIdentification", "3653578720387072");
 
     /**
      * 客户端用户名
@@ -81,6 +82,12 @@ public class Boot extends AbstractBoot {
      * 订阅的topic
      * ThingLinks 命名下发Topic (云 ——》端)
      */
-    public static ConfigSupport mqttClientTopic = new ConfigSupport("mqtt.client.topic", "/v1/devices/" + mqttClientDeviceIdentification.getDefaultValue() + "/command");
+    public static ConfigSupport mqttClientCommandTopic = new ConfigSupport("mqtt.client.command.topic", "/v1/devices/" + mqttClientDeviceIdentification.getDefaultValue() + "/command");
+
+    /**
+     * 订阅的topic
+     * ThingLinks 数据上报 Topic (云 ——》端)
+     */
+    public static ConfigSupport mqttClientDatasTopic = new ConfigSupport("mqtt.client.datas.topic", "/v1/devices/" + mqttClientDeviceIdentification.getDefaultValue() + "/datas");
 
 }

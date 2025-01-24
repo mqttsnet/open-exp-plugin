@@ -52,8 +52,11 @@ public class GB32960BaseDTO {
 
 
     private GB32960CustomData customData;
+
     private Date acquisitionTime;
+
     private Long dataTime;
+
     private String command;
 
 
