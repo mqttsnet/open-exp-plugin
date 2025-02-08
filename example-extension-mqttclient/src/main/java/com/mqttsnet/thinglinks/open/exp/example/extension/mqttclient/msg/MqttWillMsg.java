@@ -4,6 +4,7 @@ package com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.msg;
 import java.util.Arrays;
 
 import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.support.util.AssertUtils;
+import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.support.util.MqttUtils;
 import io.netty.handler.codec.mqtt.MqttProperties;
 import io.netty.handler.codec.mqtt.MqttQoS;
 
@@ -81,6 +82,7 @@ public class MqttWillMsg {
         AssertUtils.notNull(willTopic, "willTopic is null");
         AssertUtils.notNull(willMessageBytes, "willMessageBytes is null");
         AssertUtils.notNull(willQos, "willQos is null");
+        MqttUtils.topicCheck(willTopic,false);
         this.willTopic = willTopic;
         this.willMessageBytes = willMessageBytes;
         this.willQos = willQos;
