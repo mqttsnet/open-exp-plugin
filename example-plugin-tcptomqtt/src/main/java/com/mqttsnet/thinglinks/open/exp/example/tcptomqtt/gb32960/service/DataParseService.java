@@ -16,14 +16,6 @@ import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB3
  */
 
 public interface DataParseService {
-
-    /**
-     * 实时数据解析并返回数据
-     *
-     * @param readDatas
-     */
-    String realTimeDataParseAndPushData(String readDatas) throws Exception;
-
     /**
      * 处理车辆登录消息
      *

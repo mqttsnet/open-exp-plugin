@@ -97,7 +97,7 @@ public class MyComponent {
             String clientId = Boot.mqttClientClientId.getDefaultValue();
             String username = Boot.mqttClientUsername.getDefaultValue();
             String password = Boot.mqttClientPassword.getDefaultValue();
-            String mqttTopicDefaultValue = Boot.mqttClientTopic.getDefaultValue();
+            String mqttTopicDefaultValue = Boot.mqttClientCommandTopic.getDefaultValue();
             MqttQoS mqttQoS = MqttQoS.EXACTLY_ONCE;
 
             // 设置连接参数

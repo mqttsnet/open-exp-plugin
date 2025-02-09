@@ -1,8 +1,5 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity;
 
-import java.nio.charset.StandardCharsets;
-
-
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.gb32960.entity.dao.GB32960MessageData;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -50,9 +47,7 @@ public class GB32960MessageParser {
         messageData.setMsgResponse(ByteBufUtil.hexDump(frame.readBytes(1)));
 
         // 读取唯一识别码
-        byte[] vinBytes = new byte[17];
-        frame.readBytes(vinBytes);
-        messageData.setUniqueIdentifier(new String(vinBytes, StandardCharsets.UTF_8));
+        messageData.setUniqueIdentifier(ByteBufUtil.hexDump(frame.readBytes(17)));
 
         // 读取加密方式
         messageData.setEncryption(ByteBufUtil.hexDump(frame.readBytes(1)));
