@@ -1,7 +1,14 @@
+# 是否自启动exp
 exp_enable: true
+# springboot 启动时, exp主动加载的插件目录
 plugins_path: exp-plugins
+# exp 的工作目录, 其会将代码解压达成这个目录里,子目录名为插件 id
 plugins_work_dir: exp-workdir
+# 是否自动删除已经存在的 plugin 目录
+plugins_auto_delete_enable: true
+# 插件是否可以覆盖主程序 url, 注意, 目前无法支持多租户级别的覆盖
 plugins_spring_url_replace_enable: true
+# 插件动态增加字段json
 exp_object_field_config_json: '[
 {
 	"className": "com.mqttsnet.thinglinks.open.exp.adapter.springboot3.ResModel",
@@ -11,6 +18,7 @@ exp_object_field_config_json: '[
 	}]
 }
 ]'
+
 
 server:
   port: 18888

@@ -49,11 +49,15 @@ public class SendReceiveMessageTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         byte[] bytes = new byte[]{1, 1, 1, 1};
         MqttQoS mqttQoS = MqttQoS.AT_MOST_ONCE;
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password);
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_3_1_1);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -80,6 +84,7 @@ public class SendReceiveMessageTest {
                     countDownLatch.countDown();
                 }
             }
+
         });
         mqttClient.connect();
         mqttClient.subscribe(TEST_TOPIC, mqttQoS);
@@ -96,11 +101,15 @@ public class SendReceiveMessageTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         byte[] bytes = new byte[]{1, 1, 1, 1};
         MqttQoS mqttQoS = MqttQoS.AT_LEAST_ONCE;
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_3_1_1);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -142,11 +151,15 @@ public class SendReceiveMessageTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         byte[] bytes = new byte[]{1, 1, 1, 1};
         MqttQoS mqttQoS = MqttQoS.AT_MOST_ONCE;
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_3_1_1);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -189,6 +202,8 @@ public class SendReceiveMessageTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         final String nameKey = "name";
         final String nameValue = "xzc-coder";
         byte[] bytes = new byte[]{1, 1, 1, 1};
@@ -196,6 +211,8 @@ public class SendReceiveMessageTest {
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_5_0_0);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -242,6 +259,8 @@ public class SendReceiveMessageTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         final String nameKey = "name";
         final String nameValue = "xzc-coder";
         byte[] bytes = new byte[]{1, 1, 1, 1};
@@ -249,6 +268,8 @@ public class SendReceiveMessageTest {
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_5_0_0);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -294,6 +315,8 @@ public class SendReceiveMessageTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         final String nameKey = "name";
         final String nameValue = "xzc-coder";
         byte[] bytes = new byte[]{1, 1, 1, 1};
@@ -301,6 +324,8 @@ public class SendReceiveMessageTest {
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_5_0_0);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         CountDownLatch countDownLatch = new CountDownLatch(1);
