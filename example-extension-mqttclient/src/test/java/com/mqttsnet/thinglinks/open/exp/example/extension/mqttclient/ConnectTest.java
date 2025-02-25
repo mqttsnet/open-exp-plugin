@@ -67,9 +67,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_5_0_0);
         //mqtt5的参数
         mqttConnectParameter.setReceiveMaximum(10240);
@@ -90,9 +94,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_3_1_1);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         MqttFutureWrapper mqttFutureWrapper = mqttClient.connectFuture();
@@ -108,9 +116,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_5_0_0);
         //mqtt5的参数
         mqttConnectParameter.setReceiveMaximum(10240);
@@ -131,9 +143,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_3_1_1);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         //添加回调
@@ -152,9 +168,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_5_0_0);
         //mqtt5的参数
         mqttConnectParameter.setReceiveMaximum(10240);
@@ -177,9 +197,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_3_1_1);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         mqttClient.connect();
@@ -194,9 +218,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_5_0_0);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         mqttClient.connect();
@@ -214,9 +242,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         //设置自动重连
         mqttConnectParameter.setAutoReconnect(true);
         int keepAliveSeconds = 1;
@@ -250,9 +282,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_3_1_1);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         Assert.assertFalse(mqttClient.isClose());
@@ -265,9 +301,13 @@ public class ConnectTest {
         String host = PropertiesUtils.getHost();
         int port = PropertiesUtils.getPort();
         String clientId = PropertiesUtils.getClientId();
+        String username = PropertiesUtils.getUsername();
+        String password = PropertiesUtils.getPassword();
         MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
         mqttConnectParameter.setHost(host);
         mqttConnectParameter.setPort(port);
+        mqttConnectParameter.setUsername(username);
+        mqttConnectParameter.setPassword(password.toCharArray());
         mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_5_0_0);
         MqttClient mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
         Assert.assertFalse(mqttClient.isClose());
