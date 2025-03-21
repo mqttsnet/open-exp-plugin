@@ -1,18 +1,20 @@
 package com.mqttsnet.thinglinks.open.exp.adapter.springboot3;
 
+import java.io.File;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import com.mqttsnet.thinglinks.open.exp.adapter.springboot3.example.UserService;
 import com.mqttsnet.thinglinks.open.exp.client.ExpAppContext;
 import com.mqttsnet.thinglinks.open.exp.client.ExpAppContextSpiFactory;
 import com.mqttsnet.thinglinks.open.exp.client.Plugin;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.File;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * BaseController负责处理插件的加载、卸载和用户服务的相关请求。
@@ -73,7 +75,7 @@ public class BaseController {
      * @return 操作结果
      */
     @RequestMapping("/run")
-    public String run(String tenantId) {
+    public String run(@RequestParam(name = "tenantId") String tenantId) {
         log.info("run接口被调用，租户ID: {}", tenantId);
         context.set(tenantId);  // 设置租户ID到线程上下文
 
@@ -99,12 +101,12 @@ public class BaseController {
     /**
      * 预加载插件，支持从远程URL下载插件并加载。
      *
-     * @param path 插件路径或URL
+     * @param path 插件路径或URL(本地路径或远程URL),远程URL请注意URL编码
      * @return 加载的插件对象
      * @throws Throwable 加载过程中可能抛出的异常
      */
     @RequestMapping("/preload")
-    public Plugin preload(String path) throws Throwable {
+    public Plugin preload(@RequestParam(name = "path") String path) throws Throwable {
         log.info("开始预加载插件，路径: {}", path);
 
         if (path.startsWith("http")) {
@@ -123,13 +125,13 @@ public class BaseController {
     /**
      * 安装插件，支持从远程URL下载并安装插件。
      *
-     * @param path     插件路径或URL
+     * @param path     插件路径或URL(本地路径或远程URL),远程URL请注意URL编码
      * @param tenantId 租户ID
      * @return 安装的插件ID
      * @throws Throwable 安装过程中可能抛出的异常
      */
-    @RequestMapping("/install")
-    public String install(String path, String tenantId) throws Throwable {
+    @GetMapping("/install")
+    public String install(@RequestParam(name = "path") String path, @RequestParam(name = "tenantId") String tenantId) throws Throwable {
         log.info("开始安装插件，路径: {}, 租户ID: {}", path, tenantId);
 
         if (path.startsWith("http")) {
@@ -153,8 +155,8 @@ public class BaseController {
      * @return 卸载结果
      * @throws Exception 卸载过程中可能抛出的异常
      */
-    @RequestMapping("/unInstall")
-    public String unInstall(String pluginId) throws Exception {
+    @GetMapping("/unInstall")
+    public String unInstall(@RequestParam(name = "pluginId") String pluginId) throws Exception {
         log.info("开始卸载插件，插件ID: {}", pluginId);
 
         expAppContext.unload(pluginId);
