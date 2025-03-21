@@ -1,6 +1,7 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcptomqtt;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -13,7 +14,6 @@ import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.MqttConnect
 import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.callback.MqttCallback;
 import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.callback.MqttReceiveCallbackResult;
 import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.callback.MqttSendCallbackResult;
-import com.mqttsnet.thinglinks.open.exp.example.extension.mqttclient.constant.MqttVersion;
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.mqtt.event.publisher.MqttEventPublisher;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import jakarta.annotation.PostConstruct;
@@ -24,121 +24,186 @@ import org.springframework.stereotype.Component;
 
 /**
  * 组件管理总线
+ *
+ * @author mqttsnet
  */
 
 @Getter
 @Slf4j
 @Component
 public class MyComponent {
+    // 使用守护线程池（防止JVM无法退出）
+    private final ScheduledExecutorService tcpServerExecutor =
+            new ScheduledThreadPoolExecutor(1, r -> {
+                Thread t = new Thread(r, "TCP-Server-Thread");
+                t.setDaemon(true);
+                return t;
+            });
 
-    private final ScheduledExecutorService tcpServerExecutor = new ScheduledThreadPoolExecutor(10);
-
-    private final ScheduledExecutorService scheduledTaskExecutor = new ScheduledThreadPoolExecutor(10);
+    private final ScheduledExecutorService mqttHeartbeatExecutor =
+            new ScheduledThreadPoolExecutor(1, r -> {
+                Thread t = new Thread(r, "MQTT-Heartbeat-Thread");
+                t.setDaemon(true);
+                return t;
+            });
 
     private static final MqttClientFactory mqttClientFactory = new DefaultMqttClientFactory();
-
+    private final TcpServer tcpServer;
     private final MqttEventPublisher mqttEventPublisher;
+    private volatile MqttClient mqttClient;
 
-
-    private MqttClient mqttClient = null;
-    private TcpServer tcpServer = null;
-
-    public MyComponent(MqttEventPublisher mqttEventPublisher) {
+    public MyComponent(TcpServer tcpServer, MqttEventPublisher mqttEventPublisher) {
+        this.tcpServer = tcpServer;
         this.mqttEventPublisher = mqttEventPublisher;
     }
 
     @PostConstruct
-    public void init() {
-        log.info("启动 TcpToMqttServer 插件...");
+    public synchronized void init() {
+        log.info("初始化 TcpToMqtt 插件...");
 
-        // 启动 TcpServer
-        startTcpServer();
-
-        // 启动 MQTT 客户端
-        startMqttClient();
-
-        // 使用定时任务执行心跳功能
-        scheduledTaskExecutor.scheduleAtFixedRate(this::sendHeartbeat, 30, 30, TimeUnit.SECONDS);
-    }
-
-    /**
-     * 启动 TcpServer
-     */
-    private void startTcpServer() {
-        String tcpPort = Boot.tcpPort.getDefaultValue();
-
-        // 使用线程池启动 TcpServer
+        // 启动TCP服务（带异常重试机制）
         tcpServerExecutor.submit(() -> {
             try {
-                if (tcpServer == null) {
-                    tcpServer = new TcpServer();
-                }
-                int port = Integer.parseInt(tcpPort);
-                log.info("尝试在端口 {} 上启动 TcpToMqttServer", port);
-                tcpServer.start(port);
-                log.info("TcpToMqttServer 在端口 {} 上启动成功", port);
-            } catch (NumberFormatException e) {
-                log.error("端口号格式错误: {}，请检查配置", tcpPort, e);
+                tcpServer.start();
             } catch (Exception e) {
-                log.error("启动 TcpServer 时发生异常", e);
-                throw new RuntimeException("TcpToMqttServer 启动失败", e);
+                log.error("TCP服务启动失败，触发紧急关闭", e);
+                shutdown(); // 启动失败时立即清理
             }
         });
+
+        // 启动MQTT客户端（带连接重试）
+        startMqttClient();
+
+        // 定时心跳任务（30秒间隔）
+        mqttHeartbeatExecutor.scheduleAtFixedRate(
+                this::sendHeartbeat, 30, 30, TimeUnit.SECONDS
+        );
     }
 
     /**
-     * 启动并连接 MQTT 客户端
+     * 安全关闭入口（严格顺序执行）
+     */
+    @PreDestroy
+    public synchronized void shutdown() {
+        log.info("开始关闭 TcpToMqtt 插件...");
+
+        // 阶段1：停止所有定时任务
+        shutdownExecutor(mqttHeartbeatExecutor, "TcpToMqtt 插件心跳线程池");
+
+        // 阶段2：关闭MQTT客户端（必须先于TCP服务）
+        shutdownMqttClient();
+
+        // 阶段3：关闭TCP服务
+        tcpServer.shutdown();
+
+        // 阶段4：关闭TCP服务线程池
+        shutdownExecutor(tcpServerExecutor, "TCP服务线程池");
+
+        // 阶段5：最后关闭工厂（所有资源已释放）
+        mqttClientFactory.close();
+        log.info("所有资源已释放完毕");
+    }
+
+    /**
+     * 启动MQTT客户端（带旧连接清理）
      */
     private void startMqttClient() {
         try {
-            // 获取默认配置参数
-            String brokerHostDefaultValue = Boot.mqttBrokerHost.getDefaultValue();
-            String brokerPortDefaultValue = Boot.mqttBrokerPort.getDefaultValue();
-            String clientId = Boot.mqttClientClientId.getDefaultValue();
-            String username = Boot.mqttClientUsername.getDefaultValue();
-            String password = Boot.mqttClientPassword.getDefaultValue();
-            String mqttTopicDefaultValue = Boot.mqttClientCommandTopic.getDefaultValue();
-            MqttQoS mqttQoS = MqttQoS.EXACTLY_ONCE;
+            // 清理旧连接（防止重复连接）
+            if (mqttClient != null) {
+                shutdownMqttClient();
+            }
 
-            // 设置连接参数
-            MqttConnectParameter mqttConnectParameter = new MqttConnectParameter(clientId);
-            mqttConnectParameter.setHost(brokerHostDefaultValue);
-            mqttConnectParameter.setPort(Integer.parseInt(brokerPortDefaultValue));
-            mqttConnectParameter.setUsername(username);
-            mqttConnectParameter.setPassword(password);
-            mqttConnectParameter.setMqttVersion(MqttVersion.MQTT_3_1_1);
-            mqttConnectParameter.setKeepAliveTimeSeconds(120);  // 设置心跳间隔为 120 秒
-            mqttConnectParameter.setConnectTimeoutSeconds(30);  // 设置连接超时为 30 秒
-            mqttConnectParameter.setAutoReconnect(true);
+            // 构建连接参数
+            MqttConnectParameter params = new MqttConnectParameter(
+                    Boot.mqttClientClientId.getDefaultValue()
+            );
+            params.setHost(Boot.mqttBrokerHost.getDefaultValue());
+            params.setPort(Integer.parseInt(Boot.mqttBrokerPort.getDefaultValue()));
+            params.setUsername(Boot.mqttClientUsername.getDefaultValue());
+            params.setPassword(Boot.mqttClientPassword.getDefaultValue());
+            params.setAutoReconnect(true);
 
             // 创建 MQTT 客户端
-            mqttClient = mqttClientFactory.createMqttClient(mqttConnectParameter);
+            mqttClient = mqttClientFactory.createMqttClient(params);
 
             // 添加回调函数，处理消息发送和接收
             mqttClient.addMqttCallback(new MqttCallback() {
                 @Override
-                public void messageSendCallback(MqttSendCallbackResult mqttSendCallbackResult) {
-                    mqttEventPublisher.publishMqttMessageSendEvent(mqttSendCallbackResult.getTopic(), mqttSendCallbackResult.getPayload(), mqttSendCallbackResult.getQos());
+                public void messageSendCallback(MqttSendCallbackResult result) {
+                    mqttEventPublisher.publishMqttMessageSendEvent(
+                            result.getTopic(), result.getPayload(), result.getQos()
+                    );
                 }
 
                 @Override
-                public void messageReceiveCallback(MqttReceiveCallbackResult receiveCallbackResult) {
-                    mqttEventPublisher.publishMqttMessageReceiveEvent(receiveCallbackResult.getTopic(), receiveCallbackResult.getPayload(), receiveCallbackResult.getQos());
+                public void messageReceiveCallback(MqttReceiveCallbackResult result) {
+                    mqttEventPublisher.publishMqttMessageReceiveEvent(
+                            result.getTopic(), result.getPayload(), result.getQos()
+                    );
                 }
             });
 
             // 连接到 MQTT 服务器
             mqttClient.connect();
 
-            // 订阅指定的 topic
-            mqttClient.subscribe(mqttTopicDefaultValue, mqttQoS);
-            log.info("订阅成功：Topic = {}, QoS = {}", mqttTopicDefaultValue, mqttQoS);
-
+            // 订阅主题
+            String topic = Boot.mqttClientCommandTopic.getDefaultValue();
+            mqttClient.subscribe(topic, MqttQoS.EXACTLY_ONCE);
+            log.info("已成功订阅主题: {}", topic);
             // 在这里不再需要阻塞线程，客户端会通过回调不断接收消息并处理
         } catch (Exception e) {
-            log.error("发生异常：连接 MQTT 服务器失败: " + e.getMessage(), e);
+            log.error("MQTT客户端启动失败", e);
+            shutdown(); // 启动失败触发整体关闭
         }
     }
+
+    /**
+     * 分阶段关闭MQTT客户端
+     */
+    private void shutdownMqttClient() {
+        if (mqttClient != null) {
+            try {
+                // 阶段1：检查连接状态（使用正确的方法名）
+                if (mqttClient.isActive()) {
+                    // 优雅断开（保持原始API调用）
+                    mqttClient.disconnectFuture().addListener(future -> {
+                        if (!future.isSuccess()) {
+                            log.warn("MQTT优雅断开失败，尝试强制关闭");
+                        }
+                    });
+                }
+
+                // 阶段2：强制关闭
+                mqttClient.close();
+
+                log.info("MQTT客户端已关闭");
+            } catch (Exception e) {
+                log.error("MQTT关闭异常", e);
+            } finally {
+                mqttClient = null;
+            }
+        }
+    }
+
+    /**
+     * 安全关闭线程池
+     */
+    private void shutdownExecutor(ScheduledExecutorService executor, String poolName) {
+        if (executor != null && !executor.isShutdown()) {
+            List<Runnable> tasks = executor.shutdownNow();
+            log.info("终止{}中的{}个任务", poolName, tasks.size());
+
+            try {
+                if (!executor.awaitTermination(0, TimeUnit.SECONDS)) {
+                    log.warn("{}未能及时终止，可能存在资源泄漏", poolName);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
 
     /**
      * 发送 MQTT 心跳
@@ -168,57 +233,6 @@ public class MyComponent {
             log.warn("MQTT client is not connected, cannot send heartbeat");
         }
     }*/
-
-    /**
-     * 在应用关闭时优雅地关闭TcpServer和定时任务。
-     */
-    @PreDestroy
-    public void shutdown() {
-        log.info("关闭 TcpToMqttServer 插件...");
-
-        // 优雅关闭 TcpServer
-        if (tcpServer != null) {
-            tcpServer.shutdown();
-            log.info("TcpToMqttServer 已成功关闭");
-        }
-
-        // 优雅关闭定时任务线程池
-        if (!scheduledTaskExecutor.isShutdown()) {
-            scheduledTaskExecutor.shutdown();
-            try {
-                if (!scheduledTaskExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    log.warn("定时任务未在5秒内完成，强制关闭...");
-                    scheduledTaskExecutor.shutdownNow();
-                } else {
-                    log.info("定时任务已成功关闭");
-                }
-            } catch (InterruptedException e) {
-                log.error("关闭定时任务时发生异常", e);
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        // 关闭 TcpServer 线程池
-        if (!tcpServerExecutor.isShutdown()) {
-            tcpServerExecutor.shutdown();
-            try {
-                if (!tcpServerExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    log.warn("TcpToMqttServer 线程未在5秒内完成，强制关闭...");
-                    tcpServerExecutor.shutdownNow();
-                } else {
-                    log.info("TcpToMqttServer 线程已成功关闭");
-                }
-            } catch (InterruptedException e) {
-                log.error("关闭 TcpToMqttServer 线程池时发生异常", e);
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        // 关闭 MQTT 客户端
-        mqttClientFactory.close();
-        log.info("MQTT client disconnected.");
-    }
-
 
 }
 

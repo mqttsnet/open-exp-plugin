@@ -40,9 +40,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class MyServerInitializer extends ChannelInitializer<SocketChannel> {
 
-
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
+
         ChannelPipeline pipeline = ch.pipeline();
 
         log.info("Initializing channel for client: {}", ch.remoteAddress());

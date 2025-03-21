@@ -43,6 +43,10 @@ public class MqttPublishMessageEventListener implements ApplicationListener<Mqtt
     @Override
     public void onApplicationEvent(MqttPublishMessageEvent event) {
         log.info("Handling event: topic={}, payload={}, qos={}, retain={}", event.getTopic(), new String(event.getPayload()), event.getQos().value(), event.isRetain());
+        if (null == myComponent.getMqttClient()) {
+            log.warn("MqttClient is not initialized, cannot publish message.");
+            return;
+        }
         myComponent.getMqttClient().publish(event.getPayload(), event.getTopic(), event.getQos(), event.isRetain());
     }
 
