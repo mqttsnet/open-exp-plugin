@@ -5,6 +5,12 @@ import com.mqttsnet.thinglinks.open.exp.plugin.depend.AbstractBoot;
 
 /**
  * 插件核心配置文件
+ * 配置项初始化规范：
+ * 1. 所有静态配置字段必须通过静态初始化块显式定义初始化顺序
+ * 2. 禁止在字段声明时直接进行多级嵌套初始化（如 new A(new B())）
+ * 3. 跨字段依赖必须满足：
+ * - 被依赖字段在前序初始化块完成赋值
+ * - 取值时必须通过已赋值的变量引用
  *
  * @author mqttsnet
  */
@@ -82,12 +88,12 @@ public class Boot extends AbstractBoot {
      * 订阅的topic
      * ThingLinks 命名下发Topic (云 ——》端)
      */
-    public static ConfigSupport mqttClientCommandTopic = new ConfigSupport("mqtt.client.command.topic", "/v1/devices/" + mqttClientDeviceIdentification.getDefaultValue() + "/command");
+    public static ConfigSupport mqttClientCommandTopic = new ConfigSupport("mqtt.client.command.topic", "/v1/devices/3653578720387072/command");
 
     /**
      * 订阅的topic
      * ThingLinks 数据上报 Topic (云 ——》端)
      */
-    public static ConfigSupport mqttClientDatasTopic = new ConfigSupport("mqtt.client.datas.topic", "/v1/devices/" + mqttClientDeviceIdentification.getDefaultValue() + "/datas");
+    public static ConfigSupport mqttClientDatasTopic = new ConfigSupport("mqtt.client.datas.topic", "/v1/devices/3653578720387072/datas");
 
 }
