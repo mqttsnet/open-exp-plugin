@@ -1,6 +1,5 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.mqtt.event;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
@@ -25,15 +24,20 @@ import org.springframework.context.ApplicationEvent;
  */
 @Getter
 public class MqttMessageSendEvent extends ApplicationEvent {
-    private final String topic;
-    private final MqttQoS qos;
-    private final byte[] payload;
+    private final int messageId;
+    private final String[] topics;
 
-    public MqttMessageSendEvent(Object source, String topic, byte[] payload, MqttQoS qos) {
+    /**
+     * 构造消息发送事件
+     *
+     * @param source    事件源
+     * @param messageId 消息ID
+     * @param topics    成功投递的主题数组
+     */
+    public MqttMessageSendEvent(Object source, int messageId, String[] topics) {
         super(source);
-        this.topic = topic;
-        this.payload = payload;
-        this.qos = qos;
+        this.messageId = messageId;
+        this.topics = topics;
     }
 
 }

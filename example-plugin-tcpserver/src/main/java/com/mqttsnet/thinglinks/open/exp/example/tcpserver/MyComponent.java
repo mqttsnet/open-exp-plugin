@@ -1,69 +1,78 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcpserver;
 
-import cn.hutool.core.net.NetUtil;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import cn.hutool.core.net.NetUtil;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
 /**
- * 负责管理TcpServer的生命周期，并执行定时任务。
+ * 组件管理总线
  *
  * @author mqttsnet
  */
 @Slf4j
 @Component
+@Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class MyComponent {
 
-    private final ScheduledExecutorService tcpServerExecutor = new ScheduledThreadPoolExecutor(10);
-    private final ScheduledExecutorService scheduledTaskExecutor = new ScheduledThreadPoolExecutor(10);
+    // 使用守护线程池（防止JVM无法退出）
+    private final ScheduledExecutorService tcpServerExecutor =
+            new ScheduledThreadPoolExecutor(1, r -> {
+                Thread t = new Thread(r, "TCP-Server-Thread");
+                t.setDaemon(true);
+                return t;
+            });
 
-    private TcpServer tcpServer = null;
+    private final ScheduledExecutorService scheduledTaskExecutor =
+            new ScheduledThreadPoolExecutor(1, r -> {
+                Thread t = new Thread(r, "Heartbeat-Thread");
+                t.setDaemon(true);
+                return t;
+            });
+
+    private static boolean initialized = false;
+    private final TcpServer tcpServer;
+
+    public MyComponent(TcpServer tcpServer) {
+        this.tcpServer = tcpServer;
+    }
+
 
     /**
      * 初始化组件并启动TcpServer。
      */
     @PostConstruct
     public void init() {
-        String tcpPort = Boot.tcpPort.getDefaultValue();
-        log.info("启动 TcpServer 插件...");
+        log.info("初始化 tcpserver 插件...");
+        if (initialized) {
+            log.warn("重复初始化 tcpserver 插件已被阻止");
+            return;
+        }
+        initialized = true;
 
-        // 使用单独的线程池来启动TcpServer
+        // 启动TCP服务（带异常重试机制）
         tcpServerExecutor.submit(() -> {
             try {
-                if (tcpServer == null) {
-                    tcpServer = new TcpServer();
-                }
-                int port = Integer.parseInt(tcpPort);  // 确保端口号可以正确解析
-                log.info("尝试在端口 {} 上启动 TcpServer", port);
-                tcpServer.start(port);
-                log.info("TcpServer 在端口 {} 上启动成功", port);
-            } catch (NumberFormatException e) {
-                log.error("端口号格式错误: {}，请检查配置", tcpPort, e);
+                tcpServer.start();
             } catch (Exception e) {
-                log.error("启动 TcpServer 时发生异常", e);
-                throw new RuntimeException("TcpServer 启动失败", e);
+                log.error("TCP服务启动失败，触发紧急关闭", e);
+                shutdown(); // 启动失败时立即清理
             }
         });
 
-        // 使用单独的线程池来执行定时任务
-        scheduledTaskExecutor.scheduleAtFixedRate(() -> {
-            try {
-                log.info("Preparing to send heartbeat at {} with IP: {}", LocalDateTime.now(), NetUtil.getLocalhostStr());
-
-                // 发送心跳 到 插件服务器
-//                pluginServer.heartbeat(ip, port, applicationName);
-
-                log.info("Heartbeat sent successfully at {}", LocalDateTime.now());
-            } catch (Exception e) {
-                log.error("Failed to send heartbeat at {}", LocalDateTime.now(), e);
-            }
-        }, 30, 30, TimeUnit.SECONDS);
+        // 定时心跳任务（30秒间隔）
+        scheduledTaskExecutor.scheduleAtFixedRate(
+                this::sendHeartbeat, 30, 30, TimeUnit.SECONDS
+        );
     }
 
     /**
@@ -71,44 +80,51 @@ public class MyComponent {
      */
     @PreDestroy
     public void shutdown() {
-        log.info("关闭 TcpServer 插件...");
+        log.info("开始关闭 tcpserver 插件...");
 
-        // 优雅关闭 TcpServer
-        if (tcpServer != null) {
-            tcpServer.shutdown();
-            log.info("TcpServer 已成功关闭");
-        }
+        // 阶段1：停止所有定时任务
+        shutdownExecutor(scheduledTaskExecutor, "tcpserver 插件心跳线程池");
 
-        // 优雅关闭定时任务线程池
-        if (!scheduledTaskExecutor.isShutdown()) {
-            scheduledTaskExecutor.shutdown();
+        // 阶段2：关闭TCP服务
+        tcpServer.shutdown();
+
+        // 阶段3：关闭TCP服务线程池（所有资源已释放）
+        shutdownExecutor(tcpServerExecutor, "TCP服务线程池");
+
+        log.info("所有资源已释放完毕");
+    }
+
+    /**
+     * 安全关闭线程池
+     */
+    private void shutdownExecutor(ScheduledExecutorService executor, String poolName) {
+        if (executor != null && !executor.isShutdown()) {
+            List<Runnable> tasks = executor.shutdownNow();
+            log.info("终止{}中的{}个任务", poolName, tasks.size());
+
             try {
-                if (!scheduledTaskExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    log.warn("定时任务未在5秒内完成，强制关闭...");
-                    scheduledTaskExecutor.shutdownNow();
-                } else {
-                    log.info("定时任务已成功关闭");
+                if (!executor.awaitTermination(0, TimeUnit.SECONDS)) {
+                    log.warn("{}未能及时终止，可能存在资源泄漏", poolName);
                 }
             } catch (InterruptedException e) {
-                log.error("关闭定时任务时发生异常", e);
                 Thread.currentThread().interrupt();
             }
         }
+    }
 
-        // 关闭 TcpServer 线程池
-        if (!tcpServerExecutor.isShutdown()) {
-            tcpServerExecutor.shutdown();
-            try {
-                if (!tcpServerExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    log.warn("TcpServer 线程未在5秒内完成，强制关闭...");
-                    tcpServerExecutor.shutdownNow();
-                } else {
-                    log.info("TcpServer 线程已成功关闭");
-                }
-            } catch (InterruptedException e) {
-                log.error("关闭 TcpServer 线程池时发生异常", e);
-                Thread.currentThread().interrupt();
-            }
+
+    /**
+     * 发送 tcpserver 心跳
+     */
+    private void sendHeartbeat() {
+        try {
+            log.info("example-plugin-tcpserver Heartbeat sent successfully at at {} with IP: {}", LocalDateTime.now(), NetUtil.getLocalhostStr());
+
+            // 发送心跳 到 插件服务器
+//            sendMqttHeartbeat(Boot.mqttDeviceIdentification.getDefaultValue());
+
+        } catch (Exception e) {
+            log.error("Failed to send heartbeat at {}", LocalDateTime.now(), e);
         }
     }
 
