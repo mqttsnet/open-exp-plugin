@@ -34,7 +34,7 @@ public class MqttMessageSendEventListener implements ApplicationListener<MqttMes
     @Async
     @Override
     public void onApplicationEvent(MqttMessageSendEvent event) {
-        log.info("MqttMessageSendEventListener 消息发送成功：Topic = {}, QoS = {}, Payload = {}", event.getTopic(), event.getQos().value(), new String(event.getPayload()));
+        log.info("MqttMessageSendEventListener 消息发送成功：messageId = {}, topics = {}", event.getMessageId(), event.getTopics());
 
     }
 

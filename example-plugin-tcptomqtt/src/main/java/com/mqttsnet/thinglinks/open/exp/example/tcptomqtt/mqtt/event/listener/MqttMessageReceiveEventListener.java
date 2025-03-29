@@ -1,5 +1,7 @@
 package com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.mqtt.event.listener;
 
+import java.nio.charset.StandardCharsets;
+
 import com.mqttsnet.thinglinks.open.exp.example.tcptomqtt.mqtt.event.MqttMessageReceiveEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
@@ -34,8 +36,7 @@ public class MqttMessageReceiveEventListener implements ApplicationListener<Mqtt
     @Async
     @Override
     public void onApplicationEvent(MqttMessageReceiveEvent event) {
-        log.info("MqttMessageReceiveEventListener 接收到消息：Topic = {}, QoS = {}, Payload = {}", event.getTopic(), event.getQos().value(), new String(event.getPayload()));
-
+        log.info("MqttMessageReceiveEventListener 接收到消息：Topic = {}, QoS = {}, Payload = {}", event.getTopic(), event.getQos(), new String(event.getPayload(), StandardCharsets.UTF_8));
 
 
     }

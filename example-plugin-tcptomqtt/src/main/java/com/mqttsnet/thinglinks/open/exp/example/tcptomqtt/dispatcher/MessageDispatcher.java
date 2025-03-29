@@ -48,6 +48,12 @@ public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960Messag
     private static final Map<ChannelId, String> CHANNEL_TO_DEVICE_ID_MAP = new HashMap<>();
     private static final ChannelGroup CHANNEL_GROUP = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
+    /**
+     * 当客户端连接成功时调用
+     *
+     * @param ctx ChannelHandlerContext
+     * @throws Exception
+     */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // 客户端连接成功
@@ -62,12 +68,19 @@ public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960Messag
         super.channelActive(ctx);
     }
 
+    /**
+     * 当客户端断开连接时调用
+     *
+     * @param ctx ChannelHandlerContext
+     * @throws Exception
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 客户端断开连接
         log.info("客户端断开连接: {}", ctx.channel().remoteAddress());
         CHANNEL_GROUP.remove(ctx.channel());  // 从 ChannelGroup 中移除断开连接的 TCP 通道
-        // 发布设备离线的 MQTT 消息
+
+        // 发布设备离线的 MQTT 消息(如果是插件卸载，程序主动关闭的连接，此处离线消息可能发不出去，属于正常场景)
         sendDeviceStatusUpdate(ctx.channel().id(), "OFFLINE");
         CHANNEL_TO_DEVICE_ID_MAP.remove(ctx.channel().id());  // 清除映射关系
 
@@ -83,8 +96,14 @@ public class MessageDispatcher extends SimpleChannelInboundHandler<GB32960Messag
         String topic = Boot.mqttClientCommandTopic.getDefaultValue();
         String payload = String.format("{\"dataBody\":{\"deviceStatuses\":[{\"deviceId\":\"%s\",\"status\":\"%s\"}]}}", deviceId, status);
 
-        MqttEventPublisher mqttEventPublisher = SpringUtils.getBean(MqttEventPublisher.class);
-        mqttEventPublisher.publishMqttMessageEvent(topic, payload.getBytes(), MqttQoS.AT_LEAST_ONCE, false);
+        try {
+            // 获取 MQTT 事件发布器并发布消息
+            MqttEventPublisher mqttEventPublisher = SpringUtils.getBean(MqttEventPublisher.class);
+            mqttEventPublisher.publishMqttPublishMessageEvent(topic, payload.getBytes(), MqttQoS.AT_LEAST_ONCE.value(), false);
+        } catch (Exception e) {
+            log.error("发送设备状态更新消息到 MQTT 失败", e);
+        }
+
     }
 
 

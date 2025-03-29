@@ -979,7 +979,7 @@ public class DataParseServiceImpl implements DataParseService {
         // 推送数据
         MqttEventPublisher mqttEventPublisher = SpringUtils.getBean(MqttEventPublisher.class);
         String topic = Boot.mqttClientDatasTopic.getDefaultValue();
-        mqttEventPublisher.publishMqttMessageEvent(topic, payloadJson.toString().getBytes(), MqttQoS.AT_LEAST_ONCE, false);
+        mqttEventPublisher.publishMqttPublishMessageEvent(topic, payloadJson.toString().getBytes(), MqttQoS.AT_LEAST_ONCE.value(), false);
 
         // Log 推送信息
         log.info("整车数据推送到 Kafka 或 API: {}", payloadJson.toString());

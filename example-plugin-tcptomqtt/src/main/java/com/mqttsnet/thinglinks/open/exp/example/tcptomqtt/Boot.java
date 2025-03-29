@@ -50,14 +50,10 @@ public class Boot extends AbstractBoot {
     //   ------------------------------MQTT 相关配置-------------------------------------------------
 
     /**
-     * mqtt broker host
+     * mqtt broker Server Url
+     * tcp://ip:port
      */
-    public static ConfigSupport mqttBrokerHost = new ConfigSupport("mqtt.broker.host", "broker.thinglinks.mqttsnet.com");
-
-    /**
-     * mqtt broker port
-     */
-    public static ConfigSupport mqttBrokerPort = new ConfigSupport("mqtt.broker.port", "11883");
+    public static ConfigSupport mqttBrokerServerUrl = new ConfigSupport("mqtt.broker.serverUrl", "tcp://broker.thinglinks.mqttsnet.com:11883");
 
     /**
      * 客户端ID
@@ -85,13 +81,13 @@ public class Boot extends AbstractBoot {
     public static ConfigSupport mqttClientPassword = new ConfigSupport("mqtt.client.password", "123456");
 
     /**
-     * 订阅的topic
+     * 订阅的 topic
      * ThingLinks 命名下发Topic (云 ——》端)
      */
     public static ConfigSupport mqttClientCommandTopic = new ConfigSupport("mqtt.client.command.topic", "/v1/devices/3653578720387072/command");
 
     /**
-     * 订阅的topic
+     * 发布的 topic
      * ThingLinks 数据上报 Topic (云 ——》端)
      */
     public static ConfigSupport mqttClientDatasTopic = new ConfigSupport("mqtt.client.datas.topic", "/v1/devices/3653578720387072/datas");
