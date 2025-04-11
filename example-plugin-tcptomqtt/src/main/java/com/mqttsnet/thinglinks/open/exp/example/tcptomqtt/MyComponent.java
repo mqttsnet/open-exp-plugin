@@ -170,14 +170,40 @@ public class MyComponent {
             );
 
 
-            // 设置连接参数
+            // 设置连接参数 （参数请根据自己实际的业务场景进行调整）
             MqttConnectOptions options = new MqttConnectOptions();
             options.setUserName(username);
             options.setPassword(password.toCharArray());
             options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1_1);
-            options.setCleanSession(false);
+            // 【重要】cleanSession=true 表示创建临时会话：
+            // 1. Broker不会保存客户端的订阅列表和未确认消息
+            // 2. 离线期间到达的消息会丢失(QoS1/2消息不会保留)
+            // 3. 重连后需要重新订阅主题
+            options.setCleanSession(true);
+
+            // 最大未确认消息管道数(建议根据实际业务调整)：
+            // 1. 控制同时处理的QoS>0消息数量
+            // 2. 设置过小会导致吞吐量下降
+            // 3. 与线程池大小匹配避免消息堆积
+            options.setMaxInflight(100);
+
+            // 【重要】自动重连机制：
+            // 1. 网络中断时会自动尝试重连
+            // 2. 重连成功后需要手动恢复订阅(cleanSession=true时)
+            // 3. 建议配合连接状态监听使用
             options.setAutomaticReconnect(true);
+
+            // 连接超时时间(秒)：
+            // 1. 控制TCP连接的建立等待时间
+            // 2. 公网环境建议适当增大(15-60)
+            // 3. 生产环境建议不超过60秒
             options.setConnectionTimeout(30);
+
+            // 【核心参数】心跳间隔(秒)：
+            // 1. 0=禁用心跳（不建议）
+            // 2. 建议值为连接超时的30-50%
+            // 3. 需考虑运营商NAT超时策略(通常30秒)
+            // 4. 长时间无数据时维持连接用
             options.setKeepAliveInterval(30);
             log.info("MQTT客户端初始化完成，准备连接...|连接参数: {}", options);
 
