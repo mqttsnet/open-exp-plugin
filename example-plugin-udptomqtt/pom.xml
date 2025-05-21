@@ -24,14 +24,14 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>3.3.6</version>
+            <version>3.4.4</version>
         </dependency>
 
         <!-- 项目的核心依赖 -->
         <dependency>
             <groupId>com.mqttsnet.thinglinks</groupId>
             <artifactId>exp-plugin-manager-springboot-starter</artifactId>
-            <version>1.0.8</version>
+            <version>1.0.9</version>
         </dependency>
 
         <dependency>
