@@ -332,7 +332,7 @@ public class MyComponent {
                     log.warn("{}未能及时终止，可能存在资源泄漏", poolName);
                 }
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                log.error("线程池{}终止失败: {}", poolName, e.getMessage());
             }
         }
     }
