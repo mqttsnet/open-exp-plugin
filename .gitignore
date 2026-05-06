@@ -1,0 +1,52 @@
+.git
+logs
+#*.gitignore
+rebel.xml
+target/
+!.mvn/wrapper/maven-wrapper.jar
+log.path_IS_UNDEFINED
+.DS_Store
+offline_user.md
+spy.log
+*-backup-*.chnr.json
+**/.flattened-pom*.xml
+
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### AI Coding ###
+.claude
+
+### NetBeans ###
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+generatorConfig.xml
+
+### nacos ###
+third-party/nacos/derby.log
+third-party/nacos/data/
+third-party/nacos/work/
+
+src/main/filters
+*.log
+
+
+### exp-plugin ###
+exp-plugins/
+exp-workdir
