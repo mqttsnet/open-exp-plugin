@@ -25,23 +25,62 @@
         <module>example-plugin-demo</module>
 
         <!--  TCP 协议插件示例      -->
-        <!--        <module>example-plugin-tcpserver</module>-->
+        <module>example-plugin-tcpserver</module>
 
         <!--   以下模块用到需要用哪个插件示例就取消注释即可，用不到的就可以注释，以免影响调试   -->
         <module>example-plugin-tcptomqtt</module>
-        <!--        <module>example-plugin-udpserver</module>-->
-        <!--        <module>example-plugin-udptomqtt</module>-->
+        <module>example-plugin-udpserver</module>
+        <module>example-plugin-udptomqtt</module>
 
         <!--   调试运行主程序     -->
         <module>example-springboot3</module>
     </modules>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>25</maven.compiler.release>
+        <!--
+          open-exp 的 API 线。1.0.9/1.1.1 为一条线，1.1.0 与 1.2.0 各为一条，互不兼容，不可混用。
+          原先各子模块分别硬编码 1.1.0，而该线的 open-exp-client-api 不含 ConfigSupport，
+          从干净状态编译必然报「找不到符号: 类 ConfigSupport」。统一收口到此属性，避免再次漂移。
+        -->
+        <open-exp.version>1.1.1</open-exp.version>
+        <!--
+          hutool 统一版本，与平台 thinglinks-parent 对齐。
+          原先 demo 写 5.8.32、tcpserver 写 5.8.31，tcptomqtt 干脆不声明、
+          靠 open-exp 1.1.0 的 exp-plugin-manager-springboot-starter 传递带入；
+          1.1.1 起不再传递 hutool，直接用却不声明的模块会编译不过。
+        -->
+        <hutool.version>5.8.44</hutool.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!--
+                  必须显式声明 compiler 插件：本仓原先不声明，走 Maven 自带的默认版本，
+                  在高版本 JDK 上编译会抛 CompilerException: ConcurrentModificationException。
+
+                  proc=full 不可删：JDK 23+ 起 javac 不再自动发现 classpath 上的注解处理器，
+                  且不给任何警告，缺失时 Lombok/MapStruct 静默停止生成代码，
+                  表现为大量「找不到符号: 方法 getXxx()／变量 log」，极易误判成依赖问题。
+                  写在这里而不是各子模块的属性里：属性形式只在 compiler 插件 3.13.0+ 才被读取，
+                  写进 configuration 则不依赖插件版本；各子模块继承本 pluginManagement，无需重复声明。
+                -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                        <proc>full</proc>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
     <repositories>
         <repository>
@@ -63,6 +102,21 @@
             <url>https://oss.sonatype.org/content/repositories/public</url>
         </repository>
     </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <!--
+              兜底钉住 Lombok：旧版 open-exp jar 会传递带进 1.18.24，
+              该版本在 JDK 25 上编译即抛 ExceptionInInitializerError: TypeTag :: UNKNOWN。
+              Lombok 是纯编译期工具，钉版本不影响运行期 API 线。
+            -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>1.18.46</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <pluginRepositories>
         <pluginRepository>

@@ -10,6 +10,7 @@ offline_user.md
 spy.log
 *-backup-*.chnr.json
 **/.flattened-pom*.xml
+**/*-reduced-pom*.xml
 
 
 ### STS ###

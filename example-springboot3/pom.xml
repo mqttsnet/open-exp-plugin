@@ -12,8 +12,6 @@
     <artifactId>example-springboot3</artifactId>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -42,7 +40,7 @@
         <dependency>
             <groupId>com.mqttsnet.thinglinks</groupId>
             <artifactId>exp-plugin-manager-springboot-starter</artifactId>
-            <version>1.1.0</version>
+            <version>${open-exp.version}</version>
         </dependency>
 
         <dependency>

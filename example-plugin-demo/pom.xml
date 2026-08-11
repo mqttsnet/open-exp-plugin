@@ -13,12 +13,19 @@
     <version>1.0.0</version>
 
     <name>${project.artifactId}</name>
-    <url>https://www.mqttsnet.com</url>
+    <url>https://mqttsnet.com</url>
     <description>example-plugin-demo</description>
 
+
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <!--
+          本模块在 package 阶段用 antrun 把 jar 改名为 zip（PF4J 插件交付物），
+          Maven 登记的 jar 产物文件因此不复存在，install/deploy 会报
+          「did not assign a file to the build artifact」。
+          交付物是 exp-plugins/ 下的 zip，不是 Maven 依赖（无任何模块依赖本模块），故跳过。
+        -->
+        <maven.install.skip>true</maven.install.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -36,7 +43,7 @@
         <dependency>
             <groupId>com.mqttsnet.thinglinks</groupId>
             <artifactId>exp-plugin-manager-springboot-starter</artifactId>
-            <version>1.1.0</version>
+            <version>${open-exp.version}</version>
         </dependency>
 
         <dependency>
@@ -50,7 +57,7 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.8.32</version>
+            <version>${hutool.version}</version>
         </dependency>
 
         <!-- Jakarta 持久化 API -->
